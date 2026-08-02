@@ -47,4 +47,6 @@ dependencies {
     implementation(libs.security.crypto)  // for EncryptedSharedPreferences (JWT storage)
     implementation(libs.material.v1120)  // Chips, same pattern as ThoughtBook's emotion pills
     implementation(libs.core.splashscreen)
+    implementation("androidx.core:core-splashscreen:1.2.0")
+
 }
