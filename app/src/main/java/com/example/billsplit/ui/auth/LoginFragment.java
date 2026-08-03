@@ -14,7 +14,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.navigation.Navigation;
 
 import com.example.billsplit.R;
 
@@ -56,10 +55,11 @@ public class LoginFragment extends Fragment {
             viewModel.login(email, password);
         });
 
-        // NOTE: requires a "signUpFragment" destination and this action
-        // to exist in your nav_graph.xml — add both before running.
+        // TODO: once SignUpFragment exists and is added to nav_graph.xml
+        // with an action from loginFragment, replace this Toast with:
+        // Navigation.findNavController(view).navigate(R.id.action_loginFragment_to_signUpFragment);
         signUpLink.setOnClickListener(v ->
-                Navigation.findNavController(view).navigate(R.id.action_loginFragment_to_signUpFragment)
+                Toast.makeText(requireContext(), "Sign Up screen not built yet", Toast.LENGTH_SHORT).show()
         );
 
         viewModel.getLoading().observe(getViewLifecycleOwner(), isLoading -> {
@@ -73,12 +73,14 @@ public class LoginFragment extends Fragment {
             }
         });
 
-        // NOTE: requires a "groupsDashboardFragment" destination and this
-        // action to exist in your nav_graph.xml.
+        // TODO: once GroupsDashboardFragment exists and is added to
+        // nav_graph.xml with an action from loginFragment, replace this
+        // Toast with:
+        // Navigation.findNavController(view).navigate(R.id.action_loginFragment_to_groupsDashboardFragment);
         viewModel.getLoginSuccess().observe(getViewLifecycleOwner(), user -> {
             if (user != null) {
-                Navigation.findNavController(view)
-                        .navigate(R.id.action_loginFragment_to_groupsDashboardFragment);
+                Toast.makeText(requireContext(), "Logged in as " + user.getUsername()
+                        + " (Groups Dashboard not built yet)", Toast.LENGTH_SHORT).show();
             }
         });
     }
