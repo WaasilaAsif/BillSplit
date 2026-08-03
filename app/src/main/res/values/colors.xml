@@ -9,4 +9,19 @@
     <color name="input_border_focused">#146C58</color>
     <color name="social_button_border">#D6D6D6</color>
     <color name="social_icon_placeholder">#9E9E9E</color>
+
+    <!-- Variant A design tokens -->
+    <color name="color_background">#EEF1EF</color>
+    <color name="color_surface">#FBFDFB</color>
+    <color name="color_surface_variant">#F3F6F4</color>
+    <color name="color_primary_container">#B7F0DD</color>
+    <color name="color_neutral_variant">#DDE5E0</color>
+    <color name="color_outline">#737974</color>
+    <color name="color_outline_variant">#C3CAC5</color>
+    <color name="color_divider">#EDF1EE</color>
+    <color name="text_tertiary">#8A938D</color>
+    <color name="icon_default">#414944</color>
+    <color name="color_error">#B3261E</color>
+    <color name="color_error_container">#FBEAE9</color>
+    <color name="color_unread_highlight">#EEF7F3</color>
 </resources>

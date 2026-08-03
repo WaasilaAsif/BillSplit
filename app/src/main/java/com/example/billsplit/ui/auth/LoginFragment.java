@@ -14,6 +14,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 
 import com.example.billsplit.R;
 
@@ -55,11 +56,8 @@ public class LoginFragment extends Fragment {
             viewModel.login(email, password);
         });
 
-        // TODO: once SignUpFragment exists and is added to nav_graph.xml
-        // with an action from loginFragment, replace this Toast with:
-        // Navigation.findNavController(view).navigate(R.id.action_loginFragment_to_signUpFragment);
         signUpLink.setOnClickListener(v ->
-                Toast.makeText(requireContext(), "Sign Up screen not built yet", Toast.LENGTH_SHORT).show()
+                Navigation.findNavController(view).navigate(R.id.action_loginFragment_to_signUpFragment)
         );
 
         viewModel.getLoading().observe(getViewLifecycleOwner(), isLoading -> {
@@ -73,14 +71,10 @@ public class LoginFragment extends Fragment {
             }
         });
 
-        // TODO: once GroupsDashboardFragment exists and is added to
-        // nav_graph.xml with an action from loginFragment, replace this
-        // Toast with:
-        // Navigation.findNavController(view).navigate(R.id.action_loginFragment_to_groupsDashboardFragment);
         viewModel.getLoginSuccess().observe(getViewLifecycleOwner(), user -> {
             if (user != null) {
-                Toast.makeText(requireContext(), "Logged in as " + user.getUsername()
-                        + " (Groups Dashboard not built yet)", Toast.LENGTH_SHORT).show();
+                Navigation.findNavController(view)
+                        .navigate(R.id.action_loginFragment_to_groupsDashboardFragment);
             }
         });
     }

@@ -1,8 +1,7 @@
 package com.example.billsplit.data.repository;
 
-
-import com.example.billsplit.local.FakeDataSource;
 import com.example.billsplit.data.model.User;
+import com.example.billsplit.local.FakeDataSource;
 
 import java.time.Instant;
 

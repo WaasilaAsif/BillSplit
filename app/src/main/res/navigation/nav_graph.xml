@@ -1,11 +1,157 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/nav_graph.xml"
-    app:startDestination="@id/loginFragment">
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/splashFragment">
+
+    <!-- Global actions: reachable by id from any destination. -->
+    <action
+        android:id="@+id/action_global_groupDetailFragment"
+        app:destination="@id/groupDetailFragment" />
+    <action
+        android:id="@+id/action_global_expenseFormFragment"
+        app:destination="@id/expenseFormFragment" />
+    <action
+        android:id="@+id/action_global_expenseDetailFragment"
+        app:destination="@id/expenseDetailFragment" />
+    <action
+        android:id="@+id/action_global_friendDetailFragment"
+        app:destination="@id/friendDetailFragment" />
+    <action
+        android:id="@+id/action_global_addFriendFragment"
+        app:destination="@id/addFriendFragment" />
+    <action
+        android:id="@+id/action_global_addGroupMemberFragment"
+        app:destination="@id/addGroupMemberFragment" />
+    <action
+        android:id="@+id/action_global_notificationsFragment"
+        app:destination="@id/notificationsFragment" />
+    <action
+        android:id="@+id/action_global_settingsFragment"
+        app:destination="@id/settingsFragment" />
+
+    <fragment
+        android:id="@+id/splashFragment"
+        android:name="com.example.billsplit.ui.splash.SplashFragment"
+        android:label="Splash"
+        tools:layout="@layout/fragment_splash">
+        <action
+            android:id="@+id/action_splashFragment_to_onboardingFragment"
+            app:destination="@id/onboardingFragment"
+            app:popUpTo="@id/splashFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/onboardingFragment"
+        android:name="com.example.billsplit.ui.onboarding.OnboardingFragment"
+        android:label="Onboarding"
+        tools:layout="@layout/fragment_onboarding">
+        <action
+            android:id="@+id/action_onboardingFragment_to_loginFragment"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/onboardingFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
 
     <fragment
         android:id="@+id/loginFragment"
         android:name="com.example.billsplit.ui.auth.LoginFragment"
-        android:label="LoginFragment" />
+        android:label="Login"
+        tools:layout="@layout/fragment_login">
+        <action
+            android:id="@+id/action_loginFragment_to_signUpFragment"
+            app:destination="@id/signUpFragment" />
+        <action
+            android:id="@+id/action_loginFragment_to_groupsDashboardFragment"
+            app:destination="@id/groupsDashboardFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/signUpFragment"
+        android:name="com.example.billsplit.ui.auth.SignUpFragment"
+        android:label="Sign Up"
+        tools:layout="@layout/fragment_signup">
+        <action
+            android:id="@+id/action_signUpFragment_to_groupsDashboardFragment"
+            app:destination="@id/groupsDashboardFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/groupsDashboardFragment"
+        android:name="com.example.billsplit.ui.groups.GroupsDashboardFragment"
+        android:label="Groups"
+        tools:layout="@layout/fragment_groups_dashboard" />
+
+    <fragment
+        android:id="@+id/groupDetailFragment"
+        android:name="com.example.billsplit.ui.groups.GroupDetailFragment"
+        android:label="Group Detail"
+        tools:layout="@layout/fragment_group_detail" />
+
+    <fragment
+        android:id="@+id/expenseFormFragment"
+        android:name="com.example.billsplit.ui.expense.ExpenseFormFragment"
+        android:label="Expense Form"
+        tools:layout="@layout/fragment_expense_form" />
+
+    <fragment
+        android:id="@+id/expenseDetailFragment"
+        android:name="com.example.billsplit.ui.expense.ExpenseDetailFragment"
+        android:label="Expense Detail"
+        tools:layout="@layout/fragment_expense_detail" />
+
+    <fragment
+        android:id="@+id/friendsFragment"
+        android:name="com.example.billsplit.ui.friends.FriendsFragment"
+        android:label="Friends"
+        tools:layout="@layout/fragment_friends" />
+
+    <fragment
+        android:id="@+id/friendDetailFragment"
+        android:name="com.example.billsplit.ui.friends.FriendDetailFragment"
+        android:label="Friend Detail"
+        tools:layout="@layout/fragment_friend_detail" />
+
+    <fragment
+        android:id="@+id/addFriendFragment"
+        android:name="com.example.billsplit.ui.friends.AddFriendFragment"
+        android:label="Add Friend"
+        tools:layout="@layout/fragment_add_friend" />
+
+    <fragment
+        android:id="@+id/addGroupMemberFragment"
+        android:name="com.example.billsplit.ui.friends.AddGroupMemberFragment"
+        android:label="Add Members"
+        tools:layout="@layout/fragment_add_group_member" />
+
+    <fragment
+        android:id="@+id/activityFeedFragment"
+        android:name="com.example.billsplit.ui.activity.ActivityFeedFragment"
+        android:label="Activity"
+        tools:layout="@layout/fragment_activity_feed" />
+
+    <fragment
+        android:id="@+id/notificationsFragment"
+        android:name="com.example.billsplit.ui.activity.NotificationsFragment"
+        android:label="Notifications"
+        tools:layout="@layout/fragment_notifications" />
+
+    <fragment
+        android:id="@+id/accountFragment"
+        android:name="com.example.billsplit.ui.account.AccountFragment"
+        android:label="Account"
+        tools:layout="@layout/fragment_account" />
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.example.billsplit.ui.settings.SettingsFragment"
+        android:label="Settings"
+        tools:layout="@layout/fragment_settings" />
+
 </navigation>
