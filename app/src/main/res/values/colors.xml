@@ -2,4 +2,11 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="primary">#146C58</color>
+    <color name="text_primary">#1A1A1A</color>
+    <color name="text_secondary">#6B6B6B</color>
+    <color name="input_border">#D6D6D6</color>
+    <color name="input_border_focused">#146C58</color>
+    <color name="social_button_border">#D6D6D6</color>
+    <color name="social_icon_placeholder">#9E9E9E</color>
 </resources>
