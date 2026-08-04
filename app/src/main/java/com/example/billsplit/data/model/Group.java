@@ -1,38 +1,33 @@
 package com.example.billsplit.data.model;
-
-
 import com.google.gson.annotations.SerializedName;
 
-/**
- * Matches `groups` table.
- */
 public class Group {
 
+    //We needed the serialized names for api constructions
+    //GSON needs them
     @SerializedName("id")
     private String id;
-
     @SerializedName("name")
     private String name;
-
     @SerializedName("created_by")
     private String createdBy;
-
     @SerializedName("is_temporary")
     private boolean isTemporary;
-
     @SerializedName("is_archived")
     private boolean isArchived;
-
     @SerializedName("created_at")
     private String createdAt;
 
     // --- Client-only convenience field, not part of the API contract.
     // Populated by the Repository layer after computing balances for the
     // Groups Dashboard summary (e.g. "you're owed $12.50" per group card).
+
+    //transient is used to make it an exception from the serializtion process
     private transient double currentUserBalance;
 
     public Group() {
         // Required by Gson
+        //Just like in prev project to hand;e json format results
     }
 
     public Group(String id, String name, String createdBy, boolean isTemporary, boolean isArchived, String createdAt) {
