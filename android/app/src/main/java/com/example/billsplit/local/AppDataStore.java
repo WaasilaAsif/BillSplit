@@ -18,15 +18,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * In-memory, mutable, session-scoped data store. FakeDataSource itself
- * returns a fresh static list on every call — nothing persists across a
- * user action. This wraps that seed data in real mutable state so
- * Add Expense / Settle Up / Add Friend / Add Group Member / Create Group
- * actually stick for the session, matching a "fully wired" screen set
- * with no backend yet. Swap for a real Room/network-backed store later;
- * keep repository method signatures the same.
- */
 public class AppDataStore {
 
     private static AppDataStore instance;
@@ -42,7 +33,7 @@ public class AppDataStore {
     private final Set<String> friendUserIds = new LinkedHashSet<>();
 
     private final AtomicInteger idCounter = new AtomicInteger(100);
-
+    //returns the current instance of the active AppDataStore
     public static synchronized AppDataStore getInstance() {
         if (instance == null) {
             instance = new AppDataStore();
@@ -50,6 +41,7 @@ public class AppDataStore {
         return instance;
     }
 
+    //private constructor to call for apis to fill up the App DataSource
     private AppDataStore() {
         seed();
     }

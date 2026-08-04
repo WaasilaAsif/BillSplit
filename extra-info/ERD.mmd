@@ -1,0 +1,97 @@
+
+erDiagram
+    USERS ||--o{ GROUPS : creates
+    USERS ||--o{ GROUP_MEMBERS : joins
+    USERS ||--o{ GROUP_MEMBERS : invites
+    GROUPS ||--o{ GROUP_MEMBERS : has
+    GROUPS ||--o{ EXPENSES : contains
+    USERS ||--o{ EXPENSES : pays
+    EXPENSES ||--o{ EXPENSE_ITEMS : itemizes
+    EXPENSES ||--o{ EXPENSE_SPLITS : splits
+    USERS ||--o{ EXPENSE_SPLITS : owes
+    USERS ||--o{ EXPENSE_ITEMS : "assigned to"
+    USERS ||--o{ LEDGER_ENTRIES : "from / to"
+    EXPENSES ||--o{ LEDGER_ENTRIES : generates
+    SETTLEMENTS ||--o{ LEDGER_ENTRIES : generates
+    GROUPS ||--o{ SETTLEMENTS : has
+    USERS ||--o{ SETTLEMENTS : "from / to"
+    USERS ||--o{ NOTIFICATIONS : "is for"
+    GROUPS ||--o{ NOTIFICATIONS : "about"
+    EXPENSES ||--o{ NOTIFICATIONS : "about"
+    SETTLEMENTS ||--o{ NOTIFICATIONS : "about"
+
+    USERS {
+        uuid id PK
+        string username
+        string email
+        string password_hash
+        timestamp created_at
+    }
+    GROUPS {
+        uuid id PK
+        string name
+        uuid created_by FK
+        boolean is_temporary
+        boolean is_archived
+        timestamp created_at
+    }
+    GROUP_MEMBERS {
+        uuid group_id FK
+        uuid user_id FK
+        uuid invited_by FK "nullable, new"
+        timestamp joined_at
+    }
+    EXPENSES {
+        uuid id PK
+        uuid group_id FK "nullable"
+        uuid paid_by FK
+        decimal amount
+        string description
+        string category
+        string split_type
+        string receipt_url "nullable"
+        decimal tax_amount
+        timestamp created_at
+    }
+    EXPENSE_ITEMS {
+        uuid id PK
+        uuid expense_id FK
+        string item_name
+        decimal item_price
+        uuid assigned_to_user_id FK
+    }
+    EXPENSE_SPLITS {
+        uuid id PK
+        uuid expense_id FK
+        uuid user_id FK
+        decimal share_amount
+    }
+    LEDGER_ENTRIES {
+        uuid id PK
+        uuid from_user_id FK
+        uuid to_user_id FK
+        decimal amount
+        uuid expense_id FK "nullable"
+        uuid settlement_id FK "nullable"
+        timestamp created_at
+    }
+    SETTLEMENTS {
+        uuid id PK
+        uuid group_id FK
+        uuid from_user_id FK
+        uuid to_user_id FK
+        decimal amount
+        string idempotency_key UK
+        string status
+        timestamp created_at
+    }
+    NOTIFICATIONS {
+        uuid id PK
+        uuid user_id FK "who sees this"
+        string event_type
+        uuid group_id FK "nullable"
+        uuid expense_id FK "nullable"
+        uuid settlement_id FK "nullable"
+        boolean read
+        timestamp created_at
+    }
