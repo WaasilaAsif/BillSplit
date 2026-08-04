@@ -87,7 +87,7 @@ public class AppDataStore {
                 Instant.ofEpochMilli(now - 3600_000L).toString(), false));
     }
 
-    // --- Reads (defensive copies) ---
+
 
     public List<User> getUsers() {
         return new ArrayList<>(users);

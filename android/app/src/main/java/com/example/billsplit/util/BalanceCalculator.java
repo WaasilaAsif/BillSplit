@@ -7,12 +7,8 @@ import com.example.billsplit.data.model.SettlementStatus;
 
 import java.util.List;
 
-/**
- * Balances are derived from Expense.splits + paidBy + recorded Settlements
- * rather than the LedgerEntry table — LedgerEntry is reserved for a real
- * backend (see its own doc comment); recomputing here keeps the fake data
- * layer self-contained.
- *
+
+ /**
  * Sign convention throughout: positive = they're owed / owed to you,
  * negative = they owe / you owe.
  */
@@ -31,6 +27,7 @@ public final class BalanceCalculator {
                 net += e.getAmount();
             }
             for (ExpenseSplit split : splits) {
+                // t
                 if (userId.equals(split.getUserId())) {
                     net -= split.getShareAmount();
                 }
@@ -67,7 +64,7 @@ public final class BalanceCalculator {
             Double userShare = shareOf(splits, userId);
             Double otherShare = shareOf(splits, otherUserId);
             if (userPaid && otherShare != null) {
-                net += otherShare; // they owe user their share
+                net += otherShare; // doosro ne humare user ko paise dene hai
             }
             if (otherPaid && userShare != null) {
                 net -= userShare; // user owes them their share
@@ -84,12 +81,13 @@ public final class BalanceCalculator {
         return net;
     }
 
-    private static Double shareOf(List<ExpenseSplit> splits, String userId) {
-        for (ExpenseSplit split : splits) {
-            if (userId.equals(split.getUserId())) {
-                return split.getShareAmount();
-            }
-        }
-        return null;
-    }
+     private static double shareOf(List<ExpenseSplit> splits, String userId) {
+         double total = 0;
+         for (ExpenseSplit split : splits) {
+             if (userId.equals(split.getUserId())) {
+                 total += split.getShareAmount();
+             }
+         }
+         return total;
+     }
 }

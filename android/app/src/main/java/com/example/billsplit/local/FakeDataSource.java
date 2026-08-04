@@ -16,8 +16,7 @@ import java.util.List;
 
 public class FakeDataSource {
 
-    // The "logged in" user for screens-first dev — matches what
-    // TokenManager would normally resolve post-login.
+
     public static final String CURRENT_USER_ID = "u1";
 
     public static List<User> getUsers() {

@@ -52,7 +52,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="84061f58-86aa-4226-9263-734da591d61c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/android/app/src/main/java/com/example/billsplit/local/AppDataStore.java" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/src/main/java/com/example/billsplit/local/AppDataStore.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/android/app/src/main/java/com/example/billsplit/local/FakeDataSource.java" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/src/main/java/com/example/billsplit/local/FakeDataSource.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/android/app/src/main/java/com/example/billsplit/util/BalanceCalculator.java" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/src/main/java/com/example/billsplit/util/BalanceCalculator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/android/app/src/main/java/com/example/billsplit/util/Money.java" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/src/main/java/com/example/billsplit/util/Money.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -208,6 +212,17 @@
       <updated>1784892829734</updated>
     </task>
     <servers />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/android/app/src/main/java/com/example/billsplit/local/FakeDataSource.java</url>
+          <line>154</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
   <component name="play_dynamic_filters_status">
     <option name="appIdToCheckInfo">
