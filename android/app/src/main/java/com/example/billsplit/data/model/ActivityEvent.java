@@ -2,12 +2,6 @@ package com.example.billsplit.data.model;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * A single feed entry. Backs both the Activity Feed (every event) and
- * Notifications (events targeted at the current user, with `read` state)
- * screens — same shape, different filtering, so one model covers both
- * instead of duplicating it.
- */
 public class ActivityEvent {
 
     @SerializedName("id")
@@ -26,13 +20,13 @@ public class ActivityEvent {
     private String expenseId; // nullable
 
     @SerializedName("target_user_id")
-    private String targetUserId; // nullable — e.g. who a payment was made to
+    private String targetUserId; // nullable  e.g. who a payment was made to
 
     @SerializedName("amount")
     private Double amount; // nullable
 
     @SerializedName("description")
-    private String description; // nullable — e.g. expense description snapshot
+    private String description; // nullable e.g. expense description snapshot
 
     @SerializedName("created_at")
     private String createdAt;

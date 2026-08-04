@@ -2,10 +2,7 @@ package com.example.billsplit.data.model;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * Matches `expense_items` table — one row per receipt line item,
- * used only when Expense.splitType == ITEMIZED.
- */
+
 public class ExpenseItem {
 
     @SerializedName("id")

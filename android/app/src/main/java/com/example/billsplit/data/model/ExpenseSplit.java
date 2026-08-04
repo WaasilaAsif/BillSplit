@@ -3,11 +3,7 @@ package com.example.billsplit.data.model;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * Matches `expense_splits` table — each participant's share of an expense,
- * regardless of split_type (equal/exact/percentage/itemized all resolve
- * down to concrete share_amount rows here).
- */
+
 public class ExpenseSplit {
 
     @SerializedName("id")
