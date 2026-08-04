@@ -51,7 +51,7 @@ public class AccountFragment extends BottomNavFragment {
 
         view.findViewById(R.id.settingsIcon).setOnClickListener(v ->
                 Navigation.findNavController(view).navigate(R.id.action_global_settingsFragment));
-
+//Payment fragment not implemented yet
         view.findViewById(R.id.paymentMethodsRow).setOnClickListener(v ->
                 Navigation.findNavController(view).navigate(R.id.action_global_settingsFragment));
         view.findViewById(R.id.inviteFriendsRow).setOnClickListener(v -> shareInvite());
@@ -75,6 +75,7 @@ public class AccountFragment extends BottomNavFragment {
 
         double settledTotal = 0;
         String userId = AppDataStore.CURRENT_USER_ID;
+        //settled total can also be a good db level procedure
         for (Settlement s : AppDataStore.getInstance().getAllSettlements()) {
             if (userId.equals(s.getFromUserId()) || userId.equals(s.getToUserId())) {
                 settledTotal += s.getAmount();

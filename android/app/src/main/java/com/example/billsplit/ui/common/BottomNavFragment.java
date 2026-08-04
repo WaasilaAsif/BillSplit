@@ -10,12 +10,7 @@ import androidx.navigation.Navigation;
 import com.example.billsplit.R;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-/**
- * Base for the four tab-root screens (Groups, Friends, Activity, Account).
- * Each includes layout_bottom_nav.xml at the bottom of its own layout;
- * this wires selection + cross-tab navigation once instead of copy-pasting
- * it into all four fragments.
- */
+
 public abstract class BottomNavFragment extends Fragment {
 
     @IdRes

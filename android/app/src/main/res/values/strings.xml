@@ -181,7 +181,7 @@
     <string name="invite_friends">Invite friends</string>
     <string name="help_feedback">Help &amp; feedback</string>
     <string name="log_out">Log out</string>
-    <string name="currency_usd">USD ▾</string>
+    <string name="currency_PKR">PKR ▾</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>

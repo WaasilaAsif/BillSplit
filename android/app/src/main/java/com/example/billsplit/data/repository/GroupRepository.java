@@ -79,7 +79,7 @@ public class GroupRepository {
         return total;
     }
 
-    /** Aggregate "you owe $X / you're owed $Y" across every group, for the dashboard card. */
+    /** Aggregate "you owe RsX / you're owed RsY" across every group, for the dashboard card. */
     public DashboardSummary getDashboardSummary() {
         String userId = AppDataStore.CURRENT_USER_ID;
         double youOwe = 0;
