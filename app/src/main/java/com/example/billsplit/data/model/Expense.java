@@ -1,12 +1,7 @@
 package com.example.billsplit.data.model;
 import com.google.gson.annotations.SerializedName;
-
 import java.util.List;
 
-/**
- * Matches `expenses` table. `groupId` is nullable — null means a direct
- * friend-to-friend expense (not tied to any group).
- */
 public class Expense {
 
     @SerializedName("id")
@@ -41,6 +36,7 @@ public class Expense {
 
     // Populated on the Expense Detail screen when split_type is ITEMIZED.
     // Not present on list endpoints — kept nullable/transient by convention.
+    //May or may not have so have to look deeper in it's functionaluity requisites to create functions
     @SerializedName("items")
     private List<ExpenseItem> items;
 
