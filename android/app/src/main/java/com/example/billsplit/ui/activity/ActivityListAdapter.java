@@ -97,4 +97,5 @@ public class ActivityListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                     unread ? R.color.color_unread_highlight : android.R.color.transparent, null));
         }
     }
+    //abcs
 }
