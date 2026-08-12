@@ -5,6 +5,7 @@ const cors = require('cors');
 
 const healthRoutes = require('./routes/healthRoutes');
 const authRoutes = require('./routes/authRoutes');
+const groupRoutes = require('./routes/groupRoutes');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -15,7 +16,7 @@ app.use(express.json());  // parses JSON request bodies into req.body
 
 app.use('/health', healthRoutes);
 app.use('/auth', authRoutes);
-// app.use('/groups', groupRoutes);
+app.use('/groups', groupRoutes);
 // app.use('/expenses', expenseRoutes);
 
 app.use(errorHandler);

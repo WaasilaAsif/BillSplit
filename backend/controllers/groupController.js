@@ -73,14 +73,7 @@ async function listGroups(req, res) {
     }
 }
 
-/**
- * GET /groups/:id
- * Group Detail — info, member list, expense list. Checks membership
- * FIRST: without this, any logged-in user could view any group's data
- * just by guessing/incrementing an id in the URL. Authentication alone
- * (a valid token) isn't the same guarantee as authorization (you're
- * actually allowed to see THIS group).
- */
+
 async function getGroupDetail(req, res) {
     const groupId = req.params.id;
 
@@ -125,11 +118,7 @@ async function getGroupDetail(req, res) {
     }
 }
 
-/**
- * POST /groups/:id/members
- * Adds someone else to a group. Same membership check as above — you
- * must already belong to a group to invite someone else into it.
- */
+
 async function addGroupMember(req, res) {
     const groupId = req.params.id;
     const { user_id } = req.body;
@@ -157,11 +146,11 @@ async function addGroupMember(req, res) {
         res.status(201).json({ status: 'success', data: result.rows[0] });
     } catch (err) {
         if (err.code === '23505') {
-            // group_members' PRIMARY KEY (group_id, user_id) caught a duplicate.
+           //fix dup issue
             return res.status(409).json({ status: 'error', message: 'That user is already a member of this group' });
         }
         if (err.code === '23503') {
-            // foreign key violation — user_id doesn't correspond to a real user.
+            // foreign key violation  user_id doesn't correspond to a real user.
             return res.status(400).json({ status: 'error', message: 'No such user' });
         }
         console.error('addGroupMember failed', err);
