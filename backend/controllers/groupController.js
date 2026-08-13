@@ -158,4 +158,44 @@ async function addGroupMember(req, res) {
     }
 }
 
-module.exports = { createGroup, listGroups, getGroupDetail, addGroupMember };
+async function getGroupBalances(req, res) {
+    const groupId = req.params.id;
+ 
+    try {
+        const membership = await pool.query(
+            'SELECT 1 FROM group_members WHERE group_id = $1 AND user_id = $2',
+            [groupId, req.userId]
+        );
+        if (membership.rows.length === 0) {
+            return res.status(403).json({ status: 'error', message: 'You are not a member of this group' });
+        }
+ 
+        const result = await pool.query(
+            `WITH group_ledger AS (
+                 SELECT le.* FROM ledger_entries le
+                 LEFT JOIN expenses e ON e.id = le.expense_id
+                 LEFT JOIN settlements s ON s.id = le.settlement_id
+                 WHERE COALESCE(e.group_id, s.group_id) = $1
+             )
+             SELECT
+                 gm.user_id, u.username,
+                 COALESCE(SUM(CASE WHEN gl.to_user_id = $2 AND gl.from_user_id = gm.user_id THEN gl.amount ELSE 0 END), 0)
+                 - COALESCE(SUM(CASE WHEN gl.from_user_id = $2 AND gl.to_user_id = gm.user_id THEN gl.amount ELSE 0 END), 0) AS balance
+             FROM group_members gm
+             JOIN users u ON u.id = gm.user_id
+             LEFT JOIN group_ledger gl
+                 ON (gl.to_user_id = gm.user_id AND gl.from_user_id = $2)
+                 OR (gl.from_user_id = gm.user_id AND gl.to_user_id = $2)
+             WHERE gm.group_id = $1 AND gm.user_id != $2
+             GROUP BY gm.user_id, u.username`,
+            [groupId, req.userId]
+        );
+ 
+        res.json({ status: 'success', data: result.rows });
+    } catch (err) {
+        console.error('getGroupBalances failed', err);
+        res.status(500).json({ status: 'error', message: 'Could not fetch balances' });
+    }
+}
+ 
+module.exports = { createGroup, listGroups, getGroupDetail, addGroupMember, getGroupBalances };
