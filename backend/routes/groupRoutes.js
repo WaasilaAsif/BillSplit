@@ -1,6 +1,7 @@
 const express = require('express');
 const authenticateToken = require('../middleware/authenticateToken');
 const { createGroup, listGroups, getGroupDetail, addGroupMember } = require('../controllers/groupController');
+const { listExpensesForGroup } = require('../controllers/expenseController');
 
 const router = express.Router();
 
@@ -10,5 +11,6 @@ router.post('/', createGroup);
 router.get('/', listGroups);
 router.get('/:id', getGroupDetail);
 router.post('/:id/members', addGroupMember);
+router.get('/:groupId/expenses', listExpensesForGroup);
 
 module.exports = router;
