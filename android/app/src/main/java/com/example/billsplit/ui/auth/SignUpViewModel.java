@@ -30,7 +30,7 @@ public class SignUpViewModel extends ViewModel {
     }
 
     public void register(String fullName, String email, String password, String confirmPassword,
-                          boolean agreedToTerms) {
+                         boolean agreedToTerms) {
         String validationError = validate(fullName, email, password, confirmPassword, agreedToTerms);
         if (validationError != null) {
             errorMessage.setValue(validationError);
@@ -38,15 +38,25 @@ public class SignUpViewModel extends ViewModel {
         }
 
         loading.setValue(true);
-        // FakeDataSource-backed for now via AuthRepository; becomes a real
-        // network call once Week 1 backend auth endpoints exist.
-        User user = authRepository.register(fullName, email, password);
-        loading.setValue(false);
-        signUpSuccess.setValue(user);
+        // fullName maps to "username" server-side — see the NOTE in
+        // RegisterRequest.java about this naming mismatch.
+        authRepository.register(fullName, email, password, new AuthRepository.AuthCallback() {
+            @Override
+            public void onSuccess(User user) {
+                loading.setValue(false);
+                signUpSuccess.setValue(user);
+            }
+
+            @Override
+            public void onError(String message) {
+                loading.setValue(false);
+                errorMessage.setValue(message);
+            }
+        });
     }
 
     private String validate(String fullName, String email, String password, String confirmPassword,
-                             boolean agreedToTerms) {
+                            boolean agreedToTerms) {
         if (fullName == null || fullName.trim().isEmpty()) {
             return "Full name is required";
         }

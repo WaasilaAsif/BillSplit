@@ -37,16 +37,22 @@ public class LoginViewModel extends ViewModel {
         }
 
         loading.setValue(true);
-        // FakeDataSource-backed for now via AuthRepository; becomes a real
-        // network call once Week 1 backend auth endpoints exist.
-        User user = authRepository.login(email, password);
-        loading.setValue(false);
+        // Real network call now. Retrofit's enqueue() (inside AuthRepository)
+        // runs this off the main thread and posts the callback back onto it —
+        // safe to touch LiveData directly from onSuccess/onError below.
+        authRepository.login(email, password, new AuthRepository.AuthCallback() {
+            @Override
+            public void onSuccess(User user) {
+                loading.setValue(false);
+                loginSuccess.setValue(user);
+            }
 
-        if (user != null) {
-            loginSuccess.setValue(user);
-        } else {
-            errorMessage.setValue("Invalid email or password");
-        }
+            @Override
+            public void onError(String message) {
+                loading.setValue(false);
+                errorMessage.setValue(message);
+            }
+        });
     }
 
     private String validate(String email, String password) {

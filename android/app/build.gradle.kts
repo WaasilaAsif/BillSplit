@@ -53,5 +53,6 @@ dependencies {
     implementation(libs.navigation.fragment)
     implementation(libs.navigation.ui)
     implementation(libs.viewpager2)
+    implementation(libs.okhttp.logging.interceptor)
 
 }
