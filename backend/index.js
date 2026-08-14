@@ -7,6 +7,8 @@ const healthRoutes = require('./routes/healthRoutes');
 const authRoutes = require('./routes/authRoutes');
 const groupRoutes = require('./routes/groupRoutes');
 const expenseRoutes = require('./routes/expenseRoutes');
+const friendRoutes = require('./routes/friendRoutes');
+const settlementRoutes = require('./routes/settlementRoutes');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -19,6 +21,8 @@ app.use('/health', healthRoutes);
 app.use('/auth', authRoutes);
 app.use('/groups', groupRoutes);
 app.use('/expenses', expenseRoutes);
+app.use('/friends', friendRoutes);
+app.use('/settlements', settlementRoutes);
 
 app.use(errorHandler);
 
