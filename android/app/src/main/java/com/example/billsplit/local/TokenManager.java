@@ -3,17 +3,20 @@ package com.example.billsplit.local;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import android.util.Base64;
+
 import androidx.security.crypto.EncryptedSharedPreferences;
 import androidx.security.crypto.MasterKey;
 
+import org.json.JSONObject;
+
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 
-/**
- * Stores the JWT in EncryptedSharedPreferences (per the original
- * architecture doc — JWT-only, no Firebase). Must be initialized once,
- * in BillSplitApplication.onCreate(), before anything else touches it.
- */
+
+// Stores the JWT in EncryptedSharedPreferences (per the original
+ 
 public class TokenManager {
 
     private static final String PREFS_NAME = "secure_auth_prefs";
@@ -66,5 +69,22 @@ public class TokenManager {
 
     public void clearToken() {
         prefs.edit().remove(KEY_TOKEN).apply();
+    }
+
+    
+    public String getCurrentUserId() {
+        String token = getToken();
+        if (token == null) return null;
+
+        String[] parts = token.split("\\.");
+        if (parts.length != 3) return null;
+
+        try {
+            byte[] payloadBytes = Base64.decode(parts[1], Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING);
+            JSONObject payload = new JSONObject(new String(payloadBytes, StandardCharsets.UTF_8));
+            return payload.optString("sub", null);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
