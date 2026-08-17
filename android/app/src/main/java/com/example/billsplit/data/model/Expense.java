@@ -34,15 +34,18 @@ public class Expense {
     @SerializedName("created_at")
     private String createdAt;
 
-    // Populated on the Expense Detail screen when split_type is ITEMIZED.
-    // Not present on list endpoints — kept nullable/transient by convention.
-    //May or may not have so have to look deeper in it's functionaluity requisites to create functions
     @SerializedName("items")
     private List<ExpenseItem> items;
 
     // Per-user share breakdown, populated on Expense Detail.
     @SerializedName("splits")
     private List<ExpenseSplit> splits;
+
+    // populated from ExpenseDto.getYourShare() on list endpoints, which return
+    // the viewer's own share without the full splits[] (that only comes back
+    // from GET /expenses/:id). Null if not populated by this fetch.
+    private transient Double yourShare;
+    private transient String groupName;
 
     public Expense() {
         // Required by Gson
@@ -142,5 +145,21 @@ public class Expense {
 
     public void setSplits(List<ExpenseSplit> splits) {
         this.splits = splits;
+    }
+
+    public Double getYourShare() {
+        return yourShare;
+    }
+
+    public void setYourShare(Double yourShare) {
+        this.yourShare = yourShare;
+    }
+
+    public String getGroupName() {
+        return groupName;
+    }
+
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
     }
 }

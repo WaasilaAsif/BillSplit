@@ -18,12 +18,10 @@ public class Group {
     @SerializedName("created_at")
     private String createdAt;
 
-    // --- Client-only convenience field, not part of the API contract.
-    // Populated by the Repository layer after computing balances for the
-    // Groups Dashboard summary (e.g. "you're owed $12.50" per group card).
-
+    
     //transient is used to make it an exception from the serializtion process
     private transient double currentUserBalance;
+    private transient int memberCount;
 
     public Group() {
         // Required by Gson
@@ -93,5 +91,13 @@ public class Group {
 
     public void setCurrentUserBalance(double currentUserBalance) {
         this.currentUserBalance = currentUserBalance;
+    }
+
+    public int getMemberCount() {
+        return memberCount;
+    }
+
+    public void setMemberCount(int memberCount) {
+        this.memberCount = memberCount;
     }
 }
