@@ -2,94 +2,163 @@ package com.example.billsplit.data.repository;
 
 import com.example.billsplit.data.model.Expense;
 import com.example.billsplit.data.model.Group;
+import com.example.billsplit.data.model.GroupDetail;
 import com.example.billsplit.data.model.GroupMember;
-import com.example.billsplit.data.model.Settlement;
+import com.example.billsplit.data.model.MemberBalance;
 import com.example.billsplit.data.model.User;
-import com.example.billsplit.local.AppDataStore;
-import com.example.billsplit.util.BalanceCalculator;
+import com.example.billsplit.data.remote.ApiErrorMapper;
+import com.example.billsplit.data.remote.ApiService;
+import com.example.billsplit.data.remote.RetrofitClient;
+import com.example.billsplit.data.remote.dto.AddMemberRequest;
+import com.example.billsplit.data.remote.dto.ApiResponse;
+import com.example.billsplit.data.remote.dto.CreateGroupRequest;
+import com.example.billsplit.data.remote.dto.GroupBalanceDto;
+import com.example.billsplit.data.remote.dto.GroupDetailResponseDto;
+import com.example.billsplit.data.remote.dto.GroupDto;
+import com.example.billsplit.data.remote.dto.GroupMemberDto;
+import com.example.billsplit.data.remote.dto.RemovedMemberDto;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class GroupRepository {
 
-    private final AppDataStore store = AppDataStore.getInstance();
+    private final ApiService apiService = RetrofitClient.getApiService();
 
-    /** Groups with `currentUserBalance` populated from real expense/settlement data. */
-    public List<Group> getGroups() {
-        List<Group> groups = store.getGroups();
-        String userId = AppDataStore.CURRENT_USER_ID;
-        for (Group g : groups) {
-            List<Expense> expenses = store.getExpensesForGroup(g.getId());
-            List<Settlement> settlements = store.getSettlementsForGroup(g.getId());
-            double balance = BalanceCalculator.applySettlements(
-                    BalanceCalculator.userBalance(expenses, userId), settlements, userId);
-            g.setCurrentUserBalance(balance);
-        }
-        return groups;
+    public void getGroups(ApiCallback<List<Group>> callback) {
+        apiService.getGroups().enqueue(new Callback<ApiResponse<List<GroupDto>>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<List<GroupDto>>> call, Response<ApiResponse<List<GroupDto>>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<Group> groups = new ArrayList<>();
+                    for (GroupDto dto : response.body().getData()) {
+                        groups.add(toGroup(dto));
+                    }
+                    callback.onSuccess(groups);
+                } else {
+                    callback.onError(ApiErrorMapper.extractServerErrorMessage(response));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<List<GroupDto>>> call, Throwable t) {
+                callback.onError(ApiErrorMapper.networkErrorMessage(t));
+            }
+        });
     }
 
-    public Group getGroup(String groupId) {
-        return store.getGroupById(groupId);
+    public void getGroupDetail(String groupId, ApiCallback<GroupDetail> callback) {
+        apiService.getGroupDetail(groupId).enqueue(new Callback<ApiResponse<GroupDetailResponseDto>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<GroupDetailResponseDto>> call, Response<ApiResponse<GroupDetailResponseDto>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    GroupDetailResponseDto dto = response.body().getData();
+                    Group group = toGroup(dto.getGroup());
+
+                    List<GroupMember> members = new ArrayList<>();
+                    for (GroupMemberDto m : dto.getMembers()) {
+                        members.add(new GroupMember(m.getGroupId(), m.getUserId(), m.getJoinedAt(), m.getUsername(), m.getEmail()));
+                    }
+
+                    List<Expense> expenses = ExpenseRepository.toExpenseList(dto.getExpenses());
+                    callback.onSuccess(new GroupDetail(group, members, expenses));
+                } else {
+                    callback.onError(ApiErrorMapper.extractServerErrorMessage(response));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<GroupDetailResponseDto>> call, Throwable t) {
+                callback.onError(ApiErrorMapper.networkErrorMessage(t));
+            }
+        });
     }
 
-    public List<GroupMember> getGroupMembers(String groupId) {
-        return store.getGroupMembers(groupId);
+    public void createGroup(String name, ApiCallback<Group> callback) {
+        apiService.createGroup(new CreateGroupRequest(name)).enqueue(new Callback<ApiResponse<GroupDto>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<GroupDto>> call, Response<ApiResponse<GroupDto>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    callback.onSuccess(toGroup(response.body().getData()));
+                } else {
+                    callback.onError(ApiErrorMapper.extractServerErrorMessage(response));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<GroupDto>> call, Throwable t) {
+                callback.onError(ApiErrorMapper.networkErrorMessage(t));
+            }
+        });
     }
 
-    public List<User> getGroupMemberUsers(String groupId) {
-        List<User> users = new ArrayList<>();
-        for (GroupMember m : store.getGroupMembers(groupId)) {
-            User u = store.getUserById(m.getUserId());
-            if (u != null) users.add(u);
-        }
-        return users;
+    public void addMember(String groupId, User user, ApiCallback<Void> callback) {
+        apiService.addGroupMember(groupId, new AddMemberRequest(user.getId())).enqueue(new Callback<ApiResponse<GroupMemberDto>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<GroupMemberDto>> call, Response<ApiResponse<GroupMemberDto>> response) {
+                if (response.isSuccessful()) {
+                    callback.onSuccess(null);
+                } else {
+                    callback.onError(ApiErrorMapper.extractServerErrorMessage(response));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<GroupMemberDto>> call, Throwable t) {
+                callback.onError(ApiErrorMapper.networkErrorMessage(t));
+            }
+        });
     }
 
-    public Group createGroup(String name) {
-        return store.createGroup(name);
+    public void removeMember(String groupId, String userId, ApiCallback<Void> callback) {
+        apiService.removeGroupMember(groupId, userId).enqueue(new Callback<ApiResponse<RemovedMemberDto>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<RemovedMemberDto>> call, Response<ApiResponse<RemovedMemberDto>> response) {
+                if (response.isSuccessful()) {
+                    callback.onSuccess(null);
+                } else {
+                    callback.onError(ApiErrorMapper.extractServerErrorMessage(response));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<RemovedMemberDto>> call, Throwable t) {
+                callback.onError(ApiErrorMapper.networkErrorMessage(t));
+            }
+        });
     }
 
-    public void addMember(String groupId, User user) {
-        store.addGroupMember(groupId, user);
+    public void getGroupBalances(String groupId, ApiCallback<List<MemberBalance>> callback) {
+        apiService.getGroupBalances(groupId).enqueue(new Callback<ApiResponse<List<GroupBalanceDto>>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<List<GroupBalanceDto>>> call, Response<ApiResponse<List<GroupBalanceDto>>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<MemberBalance> balances = new ArrayList<>();
+                    for (GroupBalanceDto dto : response.body().getData()) {
+                        balances.add(new MemberBalance(dto.getUserId(), dto.getUsername(), dto.getBalance()));
+                    }
+                    callback.onSuccess(balances);
+                } else {
+                    callback.onError(ApiErrorMapper.extractServerErrorMessage(response));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<List<GroupBalanceDto>>> call, Throwable t) {
+                callback.onError(ApiErrorMapper.networkErrorMessage(t));
+            }
+        });
     }
 
-    public void removeMember(String groupId, String userId) {
-        store.removeGroupMember(groupId, userId);
-    }
-
-    /** Per-member net balance within a single group, for the Balances tab. */
-    public java.util.Map<String, Double> getMemberBalances(String groupId) {
-        java.util.Map<String, Double> balances = new java.util.LinkedHashMap<>();
-        List<Expense> expenses = store.getExpensesForGroup(groupId);
-        List<Settlement> settlements = store.getSettlementsForGroup(groupId);
-        for (GroupMember m : store.getGroupMembers(groupId)) {
-            double balance = BalanceCalculator.applySettlements(
-                    BalanceCalculator.userBalance(expenses, m.getUserId()), settlements, m.getUserId());
-            balances.put(m.getUserId(), balance);
-        }
-        return balances;
-    }
-
-    public double getGroupSpendTotal(String groupId) {
-        double total = 0;
-        for (Expense e : store.getExpensesForGroup(groupId)) {
-            total += e.getAmount();
-        }
-        return total;
-    }
-
-    /** Aggregate "you owe $X / you're owed $Y" across every group, for the dashboard card. */
-    public DashboardSummary getDashboardSummary() {
-        String userId = AppDataStore.CURRENT_USER_ID;
-        double youOwe = 0;
-        double youAreOwed = 0;
-        for (Group g : getGroups()) {
-            double balance = g.getCurrentUserBalance();
-            if (balance < 0) youOwe += -balance;
-            else youAreOwed += balance;
-        }
-        return new DashboardSummary(youOwe, youAreOwed);
+    private static Group toGroup(GroupDto dto) {
+        Group group = new Group(dto.getId(), dto.getName(), dto.getCreatedBy(), dto.isTemporary(), dto.isArchived(), dto.getCreatedAt());
+        group.setCurrentUserBalance(dto.getCurrentUserBalance());
+        group.setMemberCount(dto.getMemberCount());
+        return group;
     }
 
     public static class DashboardSummary {

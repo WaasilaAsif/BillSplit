@@ -1,91 +1,83 @@
 package com.example.billsplit.data.repository;
 
 import com.example.billsplit.data.model.Expense;
-import com.example.billsplit.data.model.ExpenseSplit;
 import com.example.billsplit.data.model.Friend;
-import com.example.billsplit.data.model.Settlement;
-import com.example.billsplit.data.model.User;
-import com.example.billsplit.local.AppDataStore;
-import com.example.billsplit.util.BalanceCalculator;
+import com.example.billsplit.data.remote.ApiErrorMapper;
+import com.example.billsplit.data.remote.ApiService;
+import com.example.billsplit.data.remote.RetrofitClient;
+import com.example.billsplit.data.remote.dto.ApiResponse;
+import com.example.billsplit.data.remote.dto.ExpenseDto;
+import com.example.billsplit.data.remote.dto.FriendDto;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class FriendRepository {
 
-    private final AppDataStore store = AppDataStore.getInstance();
+    private final ApiService apiService = RetrofitClient.getApiService();
 
-    public List<Friend> getFriends() {
-        String userId = AppDataStore.CURRENT_USER_ID;
-        List<Expense> allExpenses = store.getAllExpenses();
-        List<Settlement> allSettlements = store.getAllSettlements();
-
-        List<Friend> friends = new ArrayList<>();
-        for (String friendId : store.getFriendUserIds()) {
-            User user = store.getUserById(friendId);
-            if (user == null) continue;
-            double balance = BalanceCalculator.pairBalance(allExpenses, allSettlements, userId, friendId);
-            friends.add(new Friend(user.getId(), user.getUsername(), user.getEmail(), balance));
-        }
-        return friends;
-    }
-
-    public Friend getFriend(String friendId) {
-        for (Friend f : getFriends()) {
-            if (f.getUserId().equals(friendId)) return f;
-        }
-        return null;
-    }
-
-    public User getUser(String userId) {
-        return store.getUserById(userId);
-    }
-
-    /** Expenses that both the current user and `friendId` participate in, newest first. */
-    public List<Expense> getSharedExpenses(String friendId) {
-        String userId = AppDataStore.CURRENT_USER_ID;
-        List<Expense> shared = new ArrayList<>();
-        for (Expense e : store.getAllExpenses()) {
-            if (involves(e, userId) && involves(e, friendId)) {
-                shared.add(e);
+    public void getFriends(ApiCallback<List<Friend>> callback) {
+        apiService.getFriends().enqueue(new Callback<ApiResponse<List<FriendDto>>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<List<FriendDto>>> call, Response<ApiResponse<List<FriendDto>>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<Friend> friends = new ArrayList<>();
+                    for (FriendDto dto : response.body().getData()) {
+                        friends.add(new Friend(dto.getUserId(), dto.getUsername(), dto.getEmail(), dto.getNetBalance()));
+                    }
+                    callback.onSuccess(friends);
+                } else {
+                    callback.onError(ApiErrorMapper.extractServerErrorMessage(response));
+                }
             }
-        }
-        shared.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
-        return shared;
-    }
 
-    private boolean involves(Expense e, String userId) {
-        if (userId.equals(e.getPaidBy())) return true;
-        if (e.getSplits() == null) return false;
-        for (ExpenseSplit s : e.getSplits()) {
-            if (userId.equals(s.getUserId())) return true;
-        }
-        return false;
-    }
-
-    /** Users matching `query` by name/email, excluding self and existing friends. */
-    public List<User> search(String query) {
-        String needle = query.trim().toLowerCase(Locale.US);
-        List<User> results = new ArrayList<>();
-        if (needle.isEmpty()) return results;
-        List<String> existingFriendIds = store.getFriendUserIds();
-        for (User u : store.getUsers()) {
-            if (u.getId().equals(AppDataStore.CURRENT_USER_ID)) continue;
-            if (existingFriendIds.contains(u.getId())) continue;
-            if (u.getUsername().toLowerCase(Locale.US).contains(needle)
-                    || u.getEmail().toLowerCase(Locale.US).contains(needle)) {
-                results.add(u);
+            @Override
+            public void onFailure(Call<ApiResponse<List<FriendDto>>> call, Throwable t) {
+                callback.onError(ApiErrorMapper.networkErrorMessage(t));
             }
-        }
-        return results;
+        });
     }
 
-    public void addFriend(String userId) {
-        store.addFriend(userId);
+    //Does not have an endpoint to get the full details of a user/friend
+    public void getFriend(String friendId, ApiCallback<Friend> callback) {
+        getFriends(new ApiCallback<List<Friend>>() {
+            @Override
+            public void onSuccess(List<Friend> friends) {
+                for (Friend f : friends) {
+                    if (f.getUserId().equals(friendId)) {
+                        callback.onSuccess(f);
+                        return;
+                    }
+                }
+                callback.onError("Friend not found");
+            }
+
+            @Override
+            public void onError(String message) {
+                callback.onError(message);
+            }
+        });
     }
 
-    public User addFriendByEmailOrUsername(String query) {
-        return store.addFriendByEmailOrUsername(query);
+    public void getSharedExpenses(String friendId, ApiCallback<List<Expense>> callback) {
+        apiService.getSharedExpenses(friendId).enqueue(new Callback<ApiResponse<List<ExpenseDto>>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<List<ExpenseDto>>> call, Response<ApiResponse<List<ExpenseDto>>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    callback.onSuccess(ExpenseRepository.toExpenseList(response.body().getData()));
+                } else {
+                    callback.onError(ApiErrorMapper.extractServerErrorMessage(response));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<List<ExpenseDto>>> call, Throwable t) {
+                callback.onError(ApiErrorMapper.networkErrorMessage(t));
+            }
+        });
     }
 }
