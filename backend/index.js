@@ -9,6 +9,7 @@ const groupRoutes = require('./routes/groupRoutes');
 const expenseRoutes = require('./routes/expenseRoutes');
 const friendRoutes = require('./routes/friendRoutes');
 const settlementRoutes = require('./routes/settlementRoutes');
+const userRoutes = require('./routes/userRoutes');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -23,9 +24,14 @@ app.use('/groups', groupRoutes);
 app.use('/expenses', expenseRoutes);
 app.use('/friends', friendRoutes);
 app.use('/settlements', settlementRoutes);
+app.use('/users', userRoutes);
 
 app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`SplitEase backend listening on port ${PORT}`);
 });
+
+
+
+
