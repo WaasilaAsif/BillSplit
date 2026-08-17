@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -48,9 +49,17 @@
 
             <TextView style="@style/SettingsSectionHeader" android:text="@string/section_account" />
 
-            <TextView style="@style/SettingsRow" android:text="@string/edit_profile" />
+            <TextView
+                android:id="@+id/editProfileRow"
+                style="@style/SettingsRow"
+                android:foreground="?attr/selectableItemBackground"
+                android:text="@string/edit_profile" />
             <View style="@style/DividerLine" />
-            <TextView style="@style/SettingsRow" android:text="@string/change_password" />
+            <TextView
+                android:id="@+id/changePasswordRow"
+                style="@style/SettingsRow"
+                android:foreground="?attr/selectableItemBackground"
+                android:text="@string/change_password" />
             <View style="@style/DividerLine" />
 
             <LinearLayout
@@ -58,7 +67,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingVertical="10dp">
+                android:paddingVertical="12dp">
 
                 <TextView
                     android:layout_width="0dp"
@@ -83,7 +92,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingVertical="10dp">
+                android:paddingVertical="12dp">
 
                 <TextView
                     android:layout_width="0dp"
@@ -97,7 +106,9 @@
                     android:id="@+id/pushNotificationsSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:checked="true" />
+                    android:checked="true"
+                    app:thumbTint="@color/switch_thumb_tint"
+                    app:trackTint="@color/switch_track_tint" />
             </LinearLayout>
 
             <View style="@style/DividerLine" />
@@ -107,7 +118,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingVertical="10dp">
+                android:paddingVertical="12dp">
 
                 <TextView
                     android:layout_width="0dp"
@@ -121,7 +132,9 @@
                     android:id="@+id/emailNotificationsSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:checked="false" />
+                    android:checked="false"
+                    app:thumbTint="@color/switch_thumb_tint"
+                    app:trackTint="@color/switch_track_tint" />
             </LinearLayout>
 
             <TextView style="@style/SettingsSectionHeader" android:text="@string/section_preferences" />
@@ -131,7 +144,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingVertical="10dp">
+                android:paddingVertical="12dp">
 
                 <TextView
                     android:layout_width="0dp"
@@ -156,7 +169,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingVertical="10dp">
+                android:paddingVertical="12dp">
 
                 <TextView
                     android:layout_width="0dp"
@@ -176,14 +189,22 @@
 
             <TextView style="@style/SettingsSectionHeader" android:text="@string/section_about" />
 
-            <TextView style="@style/SettingsRow" android:text="@string/privacy_policy" />
+            <TextView
+                android:id="@+id/privacyPolicyRow"
+                style="@style/SettingsRow"
+                android:foreground="?attr/selectableItemBackground"
+                android:text="@string/privacy_policy" />
             <View style="@style/DividerLine" />
-            <TextView style="@style/SettingsRow" android:text="@string/terms_of_service" />
+            <TextView
+                android:id="@+id/termsOfServiceRow"
+                style="@style/SettingsRow"
+                android:foreground="?attr/selectableItemBackground"
+                android:text="@string/terms_of_service" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingVertical="10dp"
+                android:paddingVertical="12dp"
                 android:text="@string/version_label"
                 android:textColor="@color/text_tertiary"
                 android:textSize="13sp" />
@@ -194,6 +215,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:layout_marginBottom="24dp"
+                android:foreground="?attr/selectableItemBackground"
                 android:gravity="center"
                 android:paddingVertical="12dp"
                 android:text="@string/log_out"

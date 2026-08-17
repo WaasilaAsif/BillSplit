@@ -21,12 +21,27 @@
         android:backgroundTint="@color/primary"
         android:visibility="gone" />
 
-    <View
-        android:id="@+id/activityIcon"
+    <FrameLayout
         android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:background="@drawable/bg_circle"
-        android:backgroundTint="@color/color_primary_container" />
+        android:layout_height="36dp">
+
+        <View
+            android:id="@+id/activityIcon"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@drawable/bg_circle"
+            android:backgroundTint="@color/color_primary_container" />
+
+        <TextView
+            android:id="@+id/activityInitial"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textColor="@color/primary"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            tools:text="A" />
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="0dp"
@@ -42,7 +57,7 @@
             android:textColor="@color/text_primary"
             android:textSize="14sp"
             android:lineSpacingMultiplier="1.2"
-            tools:text="Aisha K. added &quot;Dinner at Cafe Luna&quot; — $45.00 in Trip to Goa" />
+            tools:text="Aisha K. added &quot;Dinner at Cafe Luna&quot; — Rs45.00 in Trip to Murree" />
 
         <TextView
             android:id="@+id/activityTimeText"

@@ -65,6 +65,8 @@
             android:background="@null"
             android:hint="@string/search_friends_hint"
             android:inputType="text"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_secondary"
             android:maxLines="1"
             android:textSize="14sp" />
 
@@ -123,6 +125,8 @@
                 android:layout_marginTop="16dp"
                 android:background="@drawable/bg_button_primary"
                 android:elevation="0dp"
+                app:backgroundTint="@color/primary"
+                app:cornerRadius="100dp"
                 android:paddingHorizontal="24dp"
                 android:text="@string/add_friend_title"
                 android:textAllCaps="false"

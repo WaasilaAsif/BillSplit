@@ -35,17 +35,6 @@
     <!-- Splash -->
     <string name="splash_tagline">split smarter, settle faster</string>
 
-    <!-- Onboarding -->
-    <string name="skip">Skip</string>
-    <string name="next">Next</string>
-    <string name="get_started">Get Started</string>
-    <string name="onboarding_title_1">Track shared expenses, split effortlessly</string>
-    <string name="onboarding_subtitle_1">Add a bill, split it any way you like, and settle up in seconds.</string>
-    <string name="onboarding_title_2">Split with friends, roommates, or your whole trip</string>
-    <string name="onboarding_subtitle_2">Create a group for any occasion and keep everyone\'s shares straight.</string>
-    <string name="onboarding_title_3">Settle up without the awkward math</string>
-    <string name="onboarding_subtitle_3">See who owes what at a glance, and record payments in one tap.</string>
-
     <!-- Groups dashboard -->
     <string name="total_balance">Total balance</string>
     <string name="groups_header">Groups</string>
@@ -62,7 +51,7 @@
     <string name="you_owe_label">you owe</string>
     <string name="owed_label">owed</string>
     <string name="create_group_subtitle">Give your group a name to get started.</string>
-    <string name="group_name_hint">e.g. Trip to Goa</string>
+    <string name="group_name_hint">e.g. Trip to Murree</string>
     <string name="group_name_required">Group name is required</string>
 
     <!-- Group detail -->
@@ -86,7 +75,7 @@
     <string name="owed_amount_label">gets back %s</string>
 
     <!-- Expense form -->
-    <string name="amount_zero">$0.00</string>
+    <string name="amount_zero">Rs0.00</string>
     <string name="enter_amount">enter amount</string>
     <string name="description_hint">Description (e.g. Dinner, Groceries)</string>
     <string name="category_food">Food</string>
@@ -98,7 +87,7 @@
     <string name="save_changes">Save Changes</string>
     <string name="delete_expense">Delete Expense</string>
     <string name="paid_by_split_equally">Paid by %1$s and split equally</string>
-    <string name="amount_required">Enter an amount greater than $0</string>
+    <string name="amount_required">Enter an amount greater than Rs0</string>
     <string name="description_required">Description is required</string>
 
     <!-- Expense detail -->
@@ -181,7 +170,7 @@
     <string name="invite_friends">Invite friends</string>
     <string name="help_feedback">Help &amp; feedback</string>
     <string name="log_out">Log out</string>
-    <string name="currency_usd">USD ▾</string>
+    <string name="currency_usd">PKR ▾</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
@@ -199,7 +188,8 @@
     <string name="privacy_policy">Privacy policy</string>
     <string name="terms_of_service">Terms of service</string>
     <string name="version_label">Version 1.0.0</string>
+    <string name="coming_soon">Coming soon</string>
 
 
-    <string name = "addText">Aisha K. added \"Dinner at Cafe Luna\" — $45.00 in Trip to Goa"</string>
+    <string name = "addText">Aisha K. added \"Dinner at Cafe Luna\" — Rs45.00 in Trip to Murree"</string>
 </resources>

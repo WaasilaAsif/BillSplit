@@ -75,7 +75,8 @@
             android:paddingVertical="10dp"
             android:textSize="15sp"
             android:textStyle="bold"
-            tools:text="You owe Aisha $85.00" />
+            android:visibility="gone"
+            tools:text="You owe Aisha Rs85.00" />
 
     </LinearLayout>
 
@@ -126,6 +127,8 @@
         android:layout_margin="16dp"
         android:background="@drawable/bg_button_primary"
         android:elevation="0dp"
+        app:backgroundTint="@color/primary"
+        app:cornerRadius="100dp"
         android:text="@string/settle_up"
         android:textAllCaps="false"
         android:textColor="@android:color/white"

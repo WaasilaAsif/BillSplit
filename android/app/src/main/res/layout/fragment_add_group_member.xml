@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -77,6 +78,8 @@
             android:background="@null"
             android:hint="@string/search_by_email_username"
             android:inputType="text"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_secondary"
             android:maxLines="1"
             android:textSize="14sp" />
 
@@ -106,6 +109,8 @@
         android:layout_margin="16dp"
         android:background="@drawable/bg_button_primary"
         android:elevation="0dp"
+        app:backgroundTint="@color/primary"
+        app:cornerRadius="100dp"
         android:text="@string/done"
         android:textAllCaps="false"
         android:textColor="@android:color/white"

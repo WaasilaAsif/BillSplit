@@ -28,10 +28,11 @@
             android:textStyle="bold" />
 
         <ImageView
+            android:id="@+id/notificationsIcon"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:padding="8dp"
-            android:src="@drawable/ic_menu"
+            android:src="@drawable/ic_bell"
             android:contentDescription="@null" />
 
     </LinearLayout>

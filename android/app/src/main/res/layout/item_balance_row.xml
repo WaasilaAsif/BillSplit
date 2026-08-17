@@ -7,12 +7,27 @@
     android:orientation="horizontal"
     android:paddingVertical="8dp">
 
-    <View
-        android:id="@+id/balanceAvatar"
+    <FrameLayout
         android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:background="@drawable/bg_circle"
-        android:backgroundTint="@color/color_neutral_variant" />
+        android:layout_height="32dp">
+
+        <View
+            android:id="@+id/balanceAvatar"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@drawable/bg_circle"
+            android:backgroundTint="@color/color_neutral_variant" />
+
+        <TextView
+            android:id="@+id/balanceInitial"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textColor="@color/text_primary"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            tools:text="Y" />
+    </FrameLayout>
 
     <TextView
         android:id="@+id/balanceName"
@@ -31,6 +46,6 @@
         android:textColor="@color/color_error"
         android:textSize="14sp"
         android:textStyle="bold"
-        tools:text="owe $22.50" />
+        tools:text="owe Rs22.50" />
 
 </LinearLayout>

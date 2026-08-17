@@ -43,6 +43,6 @@
         android:layout_height="wrap_content"
         android:textSize="13sp"
         android:textStyle="bold"
-        tools:text="you owe $85.00" />
+        tools:text="you owe Rs85.00" />
 
 </LinearLayout>

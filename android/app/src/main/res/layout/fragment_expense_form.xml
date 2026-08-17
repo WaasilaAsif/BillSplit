@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -65,7 +66,7 @@
             android:paddingVertical="6dp"
             android:textColor="@color/text_primary"
             android:textSize="13sp"
-            tools:text="Trip to Goa" />
+            tools:text="Trip to Murrue" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -132,14 +133,28 @@
                 android:gravity="center"
                 android:orientation="vertical">
 
-                <View
-                    android:id="@+id/categoryFoodDot"
+                <FrameLayout
                     android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:background="@drawable/bg_circle"
-                    android:backgroundTint="@color/primary" />
+                    android:layout_height="48dp">
+
+                    <View
+                        android:id="@+id/categoryFoodDot"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:background="@drawable/bg_circle"
+                        android:backgroundTint="@color/primary" />
+
+                    <ImageView
+                        android:id="@+id/categoryFoodIcon"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_category_food"
+                        android:contentDescription="@null" />
+                </FrameLayout>
 
                 <TextView
+                    android:id="@+id/categoryFoodLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
@@ -156,14 +171,28 @@
                 android:gravity="center"
                 android:orientation="vertical">
 
-                <View
-                    android:id="@+id/categoryTransportDot"
+                <FrameLayout
                     android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:background="@drawable/bg_circle"
-                    android:backgroundTint="@color/color_neutral_variant" />
+                    android:layout_height="48dp">
+
+                    <View
+                        android:id="@+id/categoryTransportDot"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:background="@drawable/bg_circle"
+                        android:backgroundTint="@color/color_neutral_variant" />
+
+                    <ImageView
+                        android:id="@+id/categoryTransportIcon"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_category_transport"
+                        android:contentDescription="@null" />
+                </FrameLayout>
 
                 <TextView
+                    android:id="@+id/categoryTransportLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
@@ -180,14 +209,28 @@
                 android:gravity="center"
                 android:orientation="vertical">
 
-                <View
-                    android:id="@+id/categoryHousingDot"
+                <FrameLayout
                     android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:background="@drawable/bg_circle"
-                    android:backgroundTint="@color/color_neutral_variant" />
+                    android:layout_height="48dp">
+
+                    <View
+                        android:id="@+id/categoryHousingDot"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:background="@drawable/bg_circle"
+                        android:backgroundTint="@color/color_neutral_variant" />
+
+                    <ImageView
+                        android:id="@+id/categoryHousingIcon"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_category_housing"
+                        android:contentDescription="@null" />
+                </FrameLayout>
 
                 <TextView
+                    android:id="@+id/categoryHousingLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
@@ -204,14 +247,28 @@
                 android:gravity="center"
                 android:orientation="vertical">
 
-                <View
-                    android:id="@+id/categoryOtherDot"
+                <FrameLayout
                     android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:background="@drawable/bg_circle"
-                    android:backgroundTint="@color/color_neutral_variant" />
+                    android:layout_height="48dp">
+
+                    <View
+                        android:id="@+id/categoryOtherDot"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:background="@drawable/bg_circle"
+                        android:backgroundTint="@color/color_neutral_variant" />
+
+                    <ImageView
+                        android:id="@+id/categoryOtherIcon"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_category_other"
+                        android:contentDescription="@null" />
+                </FrameLayout>
 
                 <TextView
+                    android:id="@+id/categoryOtherLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
@@ -264,6 +321,8 @@
             android:layout_marginTop="16dp"
             android:background="@drawable/bg_button_primary"
             android:elevation="0dp"
+            app:backgroundTint="@color/primary"
+            app:cornerRadius="100dp"
             android:text="@string/save_expense"
             android:textAllCaps="false"
             android:textColor="@android:color/white"
