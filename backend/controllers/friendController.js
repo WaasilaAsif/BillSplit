@@ -50,4 +50,30 @@ async function getFriendBalance(req, res) {
     }
 }
 
-module.exports = { listFriends, getFriendBalance };
+async function getSharedExpenses(req, res) {
+    const otherUserId = req.params.userId;
+
+    try {
+        // NOTE: add "AND e.is_voided = false" here once migration
+        
+        const result = await pool.query(
+            `SELECT DISTINCT e.*, g.name AS group_name
+             FROM expenses e
+             LEFT JOIN groups g ON g.id = e.group_id
+             WHERE (e.paid_by = $1 OR EXISTS (
+                   SELECT 1 FROM expense_splits es1 WHERE es1.expense_id = e.id AND es1.user_id = $1
+               ))
+               AND (e.paid_by = $2 OR EXISTS (
+                   SELECT 1 FROM expense_splits es2 WHERE es2.expense_id = e.id AND es2.user_id = $2
+               ))
+             ORDER BY e.created_at DESC`,
+            [req.userId, otherUserId]
+        );
+        res.json({ status: 'success', data: result.rows });
+    } catch (err) {
+        console.error('getSharedExpenses failed', err);
+        res.status(500).json({ status: 'error', message: 'Could not fetch shared expenses' });
+    }
+}
+
+module.exports = { listFriends, getFriendBalance, getSharedExpenses };

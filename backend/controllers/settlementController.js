@@ -40,4 +40,20 @@ async function createSettlement(req, res) {
     }
 }
 
-module.exports = { createSettlement };
+async function listSettlements(req, res) {
+    try {
+        const result = await pool.query(
+            `SELECT id, group_id, from_user_id, to_user_id, amount, status, created_at
+             FROM settlements
+             WHERE from_user_id = $1 OR to_user_id = $1
+             ORDER BY created_at DESC`,
+            [req.userId]
+        );
+        res.json({ status: 'success', data: result.rows });
+    } catch (err) {
+        console.error('listSettlements failed', err);
+        res.status(500).json({ status: 'error', message: 'Could not fetch settlements' });
+    }
+}
+
+module.exports = { createSettlement, listSettlements };

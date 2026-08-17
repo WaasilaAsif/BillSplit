@@ -47,9 +47,10 @@ async function listGroups(req, res) {
         const result = await pool.query(
             `SELECT
                 g.id, g.name, g.is_temporary, g.is_archived, g.created_at,
-                COALESCE(bal.balance, 0) AS current_user_balance
+                COALESCE(bal.balance, 0) AS current_user_balance,
+                (SELECT COUNT(*) FROM group_members gm2 WHERE gm2.group_id = g.id) AS member_count
              FROM groups g
-            
+
              JOIN group_members gm ON gm.group_id = g.id AND gm.user_id = $1
              LEFT JOIN (
                  SELECT
@@ -86,7 +87,22 @@ async function getGroupDetail(req, res) {
             return res.status(403).json({ status: 'error', message: 'You are not a member of this group' });
         }
 
-        const groupResult = await pool.query('SELECT * FROM groups WHERE id = $1', [groupId]);
+        const groupResult = await pool.query(
+            `SELECT g.*,
+                    COALESCE((
+                        SELECT SUM(CASE WHEN le.to_user_id = $2 THEN le.amount ELSE 0 END)
+                             - SUM(CASE WHEN le.from_user_id = $2 THEN le.amount ELSE 0 END)
+                        FROM ledger_entries le
+                        LEFT JOIN expenses e ON e.id = le.expense_id
+                        LEFT JOIN settlements s ON s.id = le.settlement_id
+                        WHERE COALESCE(e.group_id, s.group_id) = g.id
+                          AND (le.to_user_id = $2 OR le.from_user_id = $2)
+                    ), 0) AS current_user_balance,
+                    (SELECT COUNT(*) FROM group_members gm2 WHERE gm2.group_id = g.id) AS member_count
+             FROM groups g
+             WHERE g.id = $1`,
+            [groupId, req.userId]
+        );
         if (groupResult.rows.length === 0) {
             return res.status(404).json({ status: 'error', message: 'Group not found' });
         }
@@ -100,8 +116,12 @@ async function getGroupDetail(req, res) {
         );
 
         const expensesResult = await pool.query(
-            'SELECT * FROM expenses WHERE group_id = $1 ORDER BY created_at DESC',
-            [groupId]
+            `SELECT e.*,
+                    (SELECT share_amount FROM expense_splits WHERE expense_id = e.id AND user_id = $2) AS your_share
+             FROM expenses e
+             WHERE e.group_id = $1 AND e.is_voided = false
+             ORDER BY e.created_at DESC`,
+            [groupId, req.userId]
         );
 
         res.json({
@@ -158,6 +178,34 @@ async function addGroupMember(req, res) {
     }
 }
 
+async function removeGroupMember(req, res) {
+    const groupId = req.params.id;
+    const targetUserId = req.params.userId;
+
+    try {
+        const membership = await pool.query(
+            'SELECT 1 FROM group_members WHERE group_id = $1 AND user_id = $2',
+            [groupId, req.userId]
+        );
+        if (membership.rows.length === 0) {
+            return res.status(403).json({ status: 'error', message: 'You are not a member of this group' });
+        }
+
+        const result = await pool.query(
+            'DELETE FROM group_members WHERE group_id = $1 AND user_id = $2',
+            [groupId, targetUserId]
+        );
+        if (result.rowCount === 0) {
+            return res.status(404).json({ status: 'error', message: 'That user is not a member of this group' });
+        }
+
+        res.json({ status: 'success', data: { group_id: groupId, user_id: targetUserId } });
+    } catch (err) {
+        console.error('removeGroupMember failed', err);
+        res.status(500).json({ status: 'error', message: 'Could not remove member' });
+    }
+}
+
 async function getGroupBalances(req, res) {
     const groupId = req.params.id;
  
@@ -198,4 +246,4 @@ async function getGroupBalances(req, res) {
     }
 }
  
-module.exports = { createGroup, listGroups, getGroupDetail, addGroupMember, getGroupBalances };
+module.exports = { createGroup, listGroups, getGroupDetail, addGroupMember, removeGroupMember, getGroupBalances };

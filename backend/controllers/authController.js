@@ -91,4 +91,16 @@ async function login(req, res, next) {
     }
 }
 
-module.exports = { register, login };
+async function me(req, res, next) {
+    try {
+        const result = await pool.query('SELECT * FROM users WHERE id = $1', [req.userId]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ status: 'error', message: 'User not found' });
+        }
+        res.json({ status: 'success', data: toPublicUser(result.rows[0]) });
+    } catch (err) {
+        next(err);
+    }
+}
+
+module.exports = { register, login, me };
