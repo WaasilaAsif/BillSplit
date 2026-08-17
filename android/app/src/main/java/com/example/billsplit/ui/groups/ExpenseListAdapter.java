@@ -10,18 +10,14 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.billsplit.R;
 import com.example.billsplit.data.model.Expense;
-import com.example.billsplit.data.model.ExpenseSplit;
-import com.example.billsplit.data.model.User;
-import com.example.billsplit.local.AppDataStore;
+import com.example.billsplit.local.TokenManager;
 import com.example.billsplit.util.Money;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
-/**
- * Mixed list of month-header strings and Expense rows, matching the
- * design's "JULY 2026 / expense rows / JUNE 2026 / expense rows" layout.
- */
 public class ExpenseListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     public interface OnExpenseClickListener {
@@ -32,16 +28,17 @@ public class ExpenseListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private static final int TYPE_EXPENSE = 1;
 
     private final List<Object> items = new ArrayList<>();
-    private final AppDataStore store = AppDataStore.getInstance();
     private final OnExpenseClickListener listener;
+    private Map<String, String> memberNames = java.util.Collections.emptyMap();
 
     public ExpenseListAdapter(OnExpenseClickListener listener) {
         this.listener = listener;
     }
 
-    public void submitList(List<Object> newItems) {
+    public void submitList(List<Object> newItems, Map<String, String> memberNames) {
         items.clear();
         items.addAll(newItems);
+        this.memberNames = memberNames;
         notifyDataSetChanged();
     }
 
@@ -66,7 +63,7 @@ public class ExpenseListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         if (holder instanceof HeaderViewHolder) {
             ((HeaderViewHolder) holder).text.setText((String) item);
         } else {
-            ((ExpenseViewHolder) holder).bind((Expense) item, store, listener);
+            ((ExpenseViewHolder) holder).bind((Expense) item, memberNames, listener);
         }
     }
 
@@ -85,40 +82,37 @@ public class ExpenseListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     static class ExpenseViewHolder extends RecyclerView.ViewHolder {
+        final TextView initial;
         final TextView description;
         final TextView paidBy;
         final TextView shareInfo;
 
         ExpenseViewHolder(@NonNull View itemView) {
             super(itemView);
+            initial = itemView.findViewById(R.id.expenseInitial);
             description = itemView.findViewById(R.id.expenseDescription);
             paidBy = itemView.findViewById(R.id.expensePaidBy);
             shareInfo = itemView.findViewById(R.id.expenseShareInfo);
         }
 
-        void bind(Expense expense, AppDataStore store, OnExpenseClickListener listener) {
+        void bind(Expense expense, Map<String, String> memberNames, OnExpenseClickListener listener) {
             description.setText(expense.getDescription());
 
-            String userId = AppDataStore.CURRENT_USER_ID;
-            if (userId.equals(expense.getPaidBy())) {
+            String userId = TokenManager.getInstance().getCurrentUserId();
+            boolean youPaid = userId != null && userId.equals(expense.getPaidBy());
+            String payerName;
+            if (youPaid) {
+                payerName = "You";
                 paidBy.setText(itemView.getResources().getString(R.string.paid_by_you));
             } else {
-                User payer = store.getUserById(expense.getPaidBy());
-                String name = payer != null ? payer.getUsername() : "";
-                paidBy.setText(itemView.getResources().getString(R.string.paid_by, name));
+                payerName = memberNames.getOrDefault(expense.getPaidBy(), "");
+                paidBy.setText(itemView.getResources().getString(R.string.paid_by, payerName));
             }
+            initial.setText(payerName.isEmpty() ? "" : payerName.substring(0, 1).toUpperCase(Locale.US));
 
-            Double ownShare = null;
-            if (expense.getSplits() != null) {
-                for (ExpenseSplit split : expense.getSplits()) {
-                    if (userId.equals(split.getUserId())) {
-                        ownShare = split.getShareAmount();
-                        break;
-                    }
-                }
-            }
+            Double ownShare = expense.getYourShare();
 
-            if (userId.equals(expense.getPaidBy())) {
+            if (youPaid) {
                 double lent = expense.getAmount() - (ownShare != null ? ownShare : 0);
                 shareInfo.setText(itemView.getResources()
                         .getString(R.string.you_lent_share, Money.format(lent)));

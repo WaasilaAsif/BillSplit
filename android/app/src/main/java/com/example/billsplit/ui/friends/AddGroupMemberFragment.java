@@ -17,23 +17,28 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.billsplit.R;
+import com.example.billsplit.data.model.GroupDetail;
+import com.example.billsplit.data.model.GroupMember;
 import com.example.billsplit.data.model.User;
-import com.example.billsplit.data.repository.FriendRepository;
+import com.example.billsplit.data.repository.ApiCallback;
 import com.example.billsplit.data.repository.GroupRepository;
-import com.example.billsplit.local.AppDataStore;
+import com.example.billsplit.data.repository.UserRepository;
+import com.example.billsplit.local.TokenManager;
 import com.google.android.material.chip.ChipGroup;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 public class AddGroupMemberFragment extends Fragment {
 
     private final GroupRepository groupRepository = new GroupRepository();
-    private final FriendRepository friendRepository = new FriendRepository();
+    private final UserRepository userRepository = new UserRepository();
 
     private String groupId;
     private ChipGroup currentMembersGroup;
     private UserResultAdapter suggestedAdapter;
+    private List<GroupMember> currentMembers = new ArrayList<>();
 
     @Nullable
     @Override
@@ -53,13 +58,7 @@ public class AddGroupMemberFragment extends Fragment {
 
         RecyclerView recyclerView = view.findViewById(R.id.suggestedRecyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
-        suggestedAdapter = new UserResultAdapter(user -> {
-            if (groupId == null) return;
-            groupRepository.addMember(groupId, user);
-            Toast.makeText(requireContext(), R.string.member_added, Toast.LENGTH_SHORT).show();
-            renderCurrentMembers();
-            renderSuggested("");
-        });
+        suggestedAdapter = new UserResultAdapter(this::addMember);
         recyclerView.setAdapter(suggestedAdapter);
 
         view.findViewById(R.id.backButton).setOnClickListener(v ->
@@ -75,7 +74,7 @@ public class AddGroupMemberFragment extends Fragment {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                renderSuggested(s.toString());
+                searchSuggested(s.toString());
             }
 
             @Override
@@ -83,19 +82,53 @@ public class AddGroupMemberFragment extends Fragment {
             }
         });
 
-        renderCurrentMembers();
-        renderSuggested("");
+        loadCurrentMembers();
+    }
+
+    private void addMember(User user) {
+        if (groupId == null) return;
+        groupRepository.addMember(groupId, user, new ApiCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                if (!isAdded()) return;
+                Toast.makeText(requireContext(), R.string.member_added, Toast.LENGTH_SHORT).show();
+                loadCurrentMembers();
+            }
+
+            @Override
+            public void onError(String message) {
+                if (isAdded()) Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void loadCurrentMembers() {
+        if (groupId == null) return;
+        groupRepository.getGroupDetail(groupId, new ApiCallback<GroupDetail>() {
+            @Override
+            public void onSuccess(GroupDetail detail) {
+                if (!isAdded()) return;
+                currentMembers = detail.getMembers();
+                renderCurrentMembers();
+                suggestedAdapter.submitList(new ArrayList<>());
+            }
+
+            @Override
+            public void onError(String message) {
+                if (isAdded()) Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void renderCurrentMembers() {
-        if (groupId == null) return;
         currentMembersGroup.removeAllViews();
-        List<User> members = groupRepository.getGroupMemberUsers(groupId);
+        String currentUserId = TokenManager.getInstance().getCurrentUserId();
         LayoutInflater inflater = LayoutInflater.from(requireContext());
-        for (User user : members) {
+
+        for (GroupMember member : currentMembers) {
             View chip = inflater.inflate(R.layout.item_member_chip, currentMembersGroup, false);
-            boolean isCurrentUser = AppDataStore.CURRENT_USER_ID.equals(user.getId());
-            String name = isCurrentUser ? "You" : user.getUsername();
+            boolean isCurrentUser = member.getUserId().equals(currentUserId);
+            String name = isCurrentUser ? "You" : member.getUsername();
 
             ((TextView) chip.findViewById(R.id.chipName)).setText(name);
             ((TextView) chip.findViewById(R.id.chipInitial)).setText(name.isEmpty() ? ""
@@ -105,47 +138,56 @@ public class AddGroupMemberFragment extends Fragment {
             if (isCurrentUser) {
                 remove.setVisibility(View.GONE);
             } else {
-                remove.setOnClickListener(v -> {
-                    groupRepository.removeMember(groupId, user.getId());
-                    renderCurrentMembers();
-                });
+                remove.setOnClickListener(v -> removeMember(member.getUserId()));
             }
             currentMembersGroup.addView(chip);
         }
     }
 
-    private void renderSuggested(String query) {
-        // FriendRepository.search short-circuits to empty on a blank query,
-        // so the default "suggested" list is every non-member user instead.
-        List<User> results = query.trim().isEmpty()
-                ? suggestedNonMembers()
-                : excludeGroupMembers(friendRepository.search(query));
-        suggestedAdapter.submitList(results);
+    private void removeMember(String userId) {
+        groupRepository.removeMember(groupId, userId, new ApiCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                if (isAdded()) loadCurrentMembers();
+            }
+
+            @Override
+            public void onError(String message) {
+                if (isAdded()) Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
-    private List<User> suggestedNonMembers() {
-        List<User> nonMembers = new java.util.ArrayList<>();
-        List<User> members = groupRepository.getGroupMemberUsers(groupId);
-        for (User u : AppDataStore.getInstance().getUsers()) {
-            if (u.getId().equals(AppDataStore.CURRENT_USER_ID)) continue;
-            if (!containsUser(members, u.getId())) nonMembers.add(u);
+    private void searchSuggested(String query) {
+        if (query.trim().isEmpty()) {
+            suggestedAdapter.submitList(new ArrayList<>());
+            return;
         }
-        return nonMembers;
+        userRepository.search(query, new ApiCallback<List<User>>() {
+            @Override
+            public void onSuccess(List<User> results) {
+                if (isAdded()) suggestedAdapter.submitList(excludeCurrentMembers(results));
+            }
+
+            @Override
+            public void onError(String message) {
+                if (isAdded()) Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
-    private List<User> excludeGroupMembers(List<User> users) {
-        List<User> members = groupRepository.getGroupMemberUsers(groupId);
-        List<User> filtered = new java.util.ArrayList<>();
+    private List<User> excludeCurrentMembers(List<User> users) {
+        List<User> filtered = new ArrayList<>();
         for (User u : users) {
-            if (!containsUser(members, u.getId())) filtered.add(u);
+            boolean isMember = false;
+            for (GroupMember m : currentMembers) {
+                if (m.getUserId().equals(u.getId())) {
+                    isMember = true;
+                    break;
+                }
+            }
+            if (!isMember) filtered.add(u);
         }
         return filtered;
-    }
-
-    private boolean containsUser(List<User> users, String userId) {
-        for (User u : users) {
-            if (u.getId().equals(userId)) return true;
-        }
-        return false;
     }
 }

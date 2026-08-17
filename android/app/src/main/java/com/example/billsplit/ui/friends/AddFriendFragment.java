@@ -17,11 +17,16 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.billsplit.R;
-import com.example.billsplit.data.repository.FriendRepository;
+import com.example.billsplit.data.repository.ApiCallback;
+import com.example.billsplit.data.repository.UserRepository;
 
+import java.util.ArrayList;
+import java.util.List;
+
+//am able to search in backend but am not able to add a friend
 public class AddFriendFragment extends Fragment {
 
-    private final FriendRepository friendRepository = new FriendRepository();
+    private final UserRepository userRepository = new UserRepository();
     private UserResultAdapter adapter;
     private View resultsGroup;
     private View noResultsGroup;
@@ -42,11 +47,9 @@ public class AddFriendFragment extends Fragment {
 
         RecyclerView recyclerView = view.findViewById(R.id.resultsRecyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
-        adapter = new UserResultAdapter(user -> {
-            friendRepository.addFriend(user.getId());
-            Toast.makeText(requireContext(), R.string.friend_added, Toast.LENGTH_SHORT).show();
-            Navigation.findNavController(view).navigateUp();
-        });
+        adapter = new UserResultAdapter(user ->
+                Toast.makeText(requireContext(), "Adding a friend directly isn't supported yet — " +
+                        "you'll share a group with them once you add them to one", Toast.LENGTH_LONG).show());
         recyclerView.setAdapter(adapter);
 
         view.findViewById(R.id.backButton).setOnClickListener(v ->
@@ -85,9 +88,22 @@ public class AddFriendFragment extends Fragment {
             noResultsGroup.setVisibility(View.GONE);
             return;
         }
-        var results = friendRepository.search(query);
-        adapter.submitList(results);
-        resultsGroup.setVisibility(results.isEmpty() ? View.GONE : View.VISIBLE);
-        noResultsGroup.setVisibility(results.isEmpty() ? View.VISIBLE : View.GONE);
+        userRepository.search(query, new ApiCallback<List<com.example.billsplit.data.model.User>>() {
+            @Override
+            public void onSuccess(List<com.example.billsplit.data.model.User> results) {
+                if (!isAdded()) return;
+                adapter.submitList(results);
+                resultsGroup.setVisibility(results.isEmpty() ? View.GONE : View.VISIBLE);
+                noResultsGroup.setVisibility(results.isEmpty() ? View.VISIBLE : View.GONE);
+            }
+
+            @Override
+            public void onError(String message) {
+                if (!isAdded()) return;
+                adapter.submitList(new ArrayList<>());
+                resultsGroup.setVisibility(View.GONE);
+                noResultsGroup.setVisibility(View.VISIBLE);
+            }
+        });
     }
 }

@@ -10,7 +10,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.billsplit.R;
 import com.example.billsplit.data.model.Expense;
-import com.example.billsplit.local.AppDataStore;
 import com.example.billsplit.util.Money;
 
 import java.time.Instant;
@@ -20,13 +19,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/** Reuses item_expense_row.xml, repurposed for the Friend Detail "expenses together" list. */
+
 public class SharedExpensesAdapter extends RecyclerView.Adapter<SharedExpensesAdapter.ViewHolder> {
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("MMM d", Locale.US);
 
     private final List<Expense> expenses = new ArrayList<>();
-    private final AppDataStore store = AppDataStore.getInstance();
 
     public void submitList(List<Expense> newExpenses) {
         expenses.clear();
@@ -47,11 +45,7 @@ public class SharedExpensesAdapter extends RecyclerView.Adapter<SharedExpensesAd
         Expense expense = expenses.get(position);
         holder.description.setText(expense.getDescription());
 
-        String groupName = "";
-        if (expense.getGroupId() != null) {
-            com.example.billsplit.data.model.Group g = store.getGroupById(expense.getGroupId());
-            if (g != null) groupName = g.getName() + " · ";
-        }
+        String groupName = expense.getGroupName() != null ? expense.getGroupName() + " · " : "";
         String date = DATE_FORMAT.format(Instant.parse(expense.getCreatedAt()).atZone(ZoneOffset.UTC));
         holder.subtext.setText(groupName + date);
 

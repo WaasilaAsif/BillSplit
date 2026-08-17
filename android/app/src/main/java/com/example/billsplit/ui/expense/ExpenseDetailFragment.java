@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -15,8 +16,7 @@ import androidx.navigation.Navigation;
 import com.example.billsplit.R;
 import com.example.billsplit.data.model.Expense;
 import com.example.billsplit.data.model.ExpenseSplit;
-import com.example.billsplit.data.model.User;
-import com.example.billsplit.local.AppDataStore;
+import com.example.billsplit.local.TokenManager;
 import com.example.billsplit.ui.settle.SettleUpBottomSheetFragment;
 import com.example.billsplit.util.Money;
 
@@ -31,7 +31,6 @@ public class ExpenseDetailFragment extends Fragment {
             DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.US);
 
     private ExpenseDetailViewModel viewModel;
-    private final AppDataStore store = AppDataStore.getInstance();
 
     @Nullable
     @Override
@@ -62,19 +61,25 @@ public class ExpenseDetailFragment extends Fragment {
             editArgs.putString("expenseId", expenseId);
             Navigation.findNavController(view).navigate(R.id.action_global_expenseFormFragment, editArgs);
         });
-        view.findViewById(R.id.deleteIcon).setOnClickListener(v -> {
-            viewModel.delete();
-            Navigation.findNavController(view).navigateUp();
-        });
+        view.findViewById(R.id.deleteIcon).setOnClickListener(v -> viewModel.delete());
         view.findViewById(R.id.settleUpButton).setOnClickListener(v -> {
             ExpenseDetailViewModel.SettleTarget target = viewModel.resolveSettleTarget();
-            if (target == null) return;
+            Expense expense = viewModel.getExpense().getValue();
+            if (target == null || expense == null) return;
+            String currentUserId = TokenManager.getInstance().getCurrentUserId();
+            String otherPartyId = target.fromUserId.equals(currentUserId) ? target.toUserId : target.fromUserId;
             SettleUpBottomSheetFragment.newInstance(target.fromUserId, target.toUserId, target.amount,
-                            currentGroupId())
+                            currentGroupId(), nameFor(expense, otherPartyId))
                     .show(getParentFragmentManager(), "settle_up");
         });
 
         viewModel.getExpense().observe(getViewLifecycleOwner(), this::render);
+        viewModel.getErrorMessage().observe(getViewLifecycleOwner(), error -> {
+            if (error != null) Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show();
+        });
+        viewModel.getDeleted().observe(getViewLifecycleOwner(), deleted -> {
+            if (deleted != null && deleted) Navigation.findNavController(view).navigateUp();
+        });
         viewModel.load(expenseId);
     }
 
@@ -90,19 +95,21 @@ public class ExpenseDetailFragment extends Fragment {
         ((TextView) root.findViewById(R.id.expenseDescriptionText)).setText(expense.getDescription());
         ((TextView) root.findViewById(R.id.expenseAmountText)).setText(Money.format(expense.getAmount()));
 
-        String userId = AppDataStore.CURRENT_USER_ID;
+        String userId = TokenManager.getInstance().getCurrentUserId();
+        boolean youPaid = userId != null && userId.equals(expense.getPaidBy());
+        String payerName = nameFor(expense, expense.getPaidBy());
+
         String dateLabel = DATE_FORMAT.format(Instant.parse(expense.getCreatedAt()).atZone(ZoneOffset.UTC));
-        String addedBy = userId.equals(expense.getPaidBy()) ? getString(R.string.added_by_you)
-                : getString(R.string.added_by, nameFor(expense.getPaidBy()));
+        String addedBy = youPaid ? getString(R.string.added_by_you) : getString(R.string.added_by, payerName);
         ((TextView) root.findViewById(R.id.expenseMetaText)).setText(addedBy + " · " + dateLabel);
 
-        String payerSummary = userId.equals(expense.getPaidBy())
+        String payerSummary = youPaid
                 ? getString(R.string.you_paid, Money.format(expense.getAmount()))
-                : getString(R.string.payer_paid, nameFor(expense.getPaidBy()), Money.format(expense.getAmount()));
+                : getString(R.string.payer_paid, payerName, Money.format(expense.getAmount()));
         ((TextView) root.findViewById(R.id.payerSummaryText)).setText(payerSummary);
 
-        String footer = userId.equals(expense.getPaidBy()) ? getString(R.string.you_added_this_expense)
-                : getString(R.string.added_this_expense, nameFor(expense.getPaidBy()));
+        String footer = youPaid ? getString(R.string.you_added_this_expense)
+                : getString(R.string.added_this_expense, payerName);
         ((TextView) root.findViewById(R.id.addedByFooterText)).setText(footer);
 
         renderSplits(root, expense);
@@ -116,7 +123,7 @@ public class ExpenseDetailFragment extends Fragment {
         android.widget.LinearLayout container = root.findViewById(R.id.splitsContainer);
         container.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(requireContext());
-        String userId = AppDataStore.CURRENT_USER_ID;
+        String userId = TokenManager.getInstance().getCurrentUserId();
 
         for (ExpenseSplit split : expense.getSplits()) {
             View row = inflater.inflate(R.layout.item_balance_row, container, false);
@@ -124,7 +131,7 @@ public class ExpenseDetailFragment extends Fragment {
             TextView amount = row.findViewById(R.id.balanceAmount);
 
             boolean isPayer = split.getUserId().equals(expense.getPaidBy());
-            name.setText(userId.equals(split.getUserId()) ? "You" : nameFor(split.getUserId()));
+            name.setText(split.getUserId().equals(userId) ? "You" : split.getUsername());
 
             if (isPayer) {
                 double owedBack = expense.getAmount() - split.getShareAmount();
@@ -138,8 +145,13 @@ public class ExpenseDetailFragment extends Fragment {
         }
     }
 
-    private String nameFor(String userId) {
-        User user = store.getUserById(userId);
-        return user != null ? user.getUsername() : "";
+    private String nameFor(Expense expense, String userId) {
+        if (expense.getSplits() == null || userId == null) return "";
+        for (ExpenseSplit split : expense.getSplits()) {
+            if (userId.equals(split.getUserId())) {
+                return split.getUsername();
+            }
+        }
+        return "";
     }
 }

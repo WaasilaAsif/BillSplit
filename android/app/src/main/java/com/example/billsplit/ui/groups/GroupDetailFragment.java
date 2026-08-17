@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -19,6 +20,10 @@ import com.example.billsplit.data.model.Expense;
 import com.example.billsplit.data.model.Group;
 import com.example.billsplit.util.Money;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class GroupDetailFragment extends Fragment {
 
@@ -46,6 +51,7 @@ public class GroupDetailFragment extends Fragment {
 
     private Tab currentTab = Tab.EXPENSES;
     private boolean hasExpenses = false;
+    private Map<String, String> memberNames = new HashMap<>();
 
     @Nullable
     @Override
@@ -99,8 +105,13 @@ public class GroupDetailFragment extends Fragment {
         view.findViewById(R.id.emptyAddExpenseButton).setOnClickListener(v -> openAddExpense());
 
         viewModel.getGroup().observe(getViewLifecycleOwner(), this::renderGroup);
+        viewModel.getMemberNames().observe(getViewLifecycleOwner(), names -> {
+            memberNames = names;
+            List<Object> items = viewModel.getExpenseItems().getValue();
+            if (items != null) expenseAdapter.submitList(items, memberNames);
+        });
         viewModel.getExpenseItems().observe(getViewLifecycleOwner(), items -> {
-            expenseAdapter.submitList(items);
+            expenseAdapter.submitList(items, memberNames);
             hasExpenses = !items.isEmpty();
             updateTabVisibility();
         });
@@ -112,6 +123,9 @@ public class GroupDetailFragment extends Fragment {
                 totalsPaidText.setText(getString(R.string.you_paid_total, Money.format(paid))));
         viewModel.getYourShareTotal().observe(getViewLifecycleOwner(), share ->
                 totalsOwedText.setText(getString(R.string.your_share_total, Money.format(share))));
+        viewModel.getErrorMessage().observe(getViewLifecycleOwner(), error -> {
+            if (error != null) Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show();
+        });
 
         selectTab(Tab.EXPENSES);
         loadGroup();

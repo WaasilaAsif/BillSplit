@@ -13,9 +13,9 @@ import com.example.billsplit.data.model.ActivityEvent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
-/** Mixed list of section-header strings and ActivityEvent rows, used by both
- * the Activity Feed and Notifications screens. */
+
 public class ActivityListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static final int TYPE_HEADER = 0;
@@ -75,6 +75,7 @@ public class ActivityListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     static class EventViewHolder extends RecyclerView.ViewHolder {
         final View dot;
+        final TextView initial;
         final TextView text;
         final TextView time;
         final View root;
@@ -83,6 +84,7 @@ public class ActivityListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             super(itemView);
             root = itemView.findViewById(R.id.activityRowRoot);
             dot = itemView.findViewById(R.id.unreadDot);
+            initial = itemView.findViewById(R.id.activityInitial);
             text = itemView.findViewById(R.id.activityText);
             time = itemView.findViewById(R.id.activityTimeText);
         }
@@ -90,6 +92,9 @@ public class ActivityListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         void bind(ActivityEvent event, boolean showUnreadStyling) {
             text.setText(ActivityTextFormatter.describe(itemView.getContext(), event));
             time.setText(ActivityTextFormatter.relativeTime(itemView.getContext(), event.getCreatedAt()));
+
+            String actorName = ActivityTextFormatter.actorName(event);
+            initial.setText(actorName.isEmpty() ? "" : actorName.substring(0, 1).toUpperCase(Locale.US));
 
             boolean unread = showUnreadStyling && !event.isRead();
             dot.setVisibility(unread ? View.VISIBLE : View.GONE);

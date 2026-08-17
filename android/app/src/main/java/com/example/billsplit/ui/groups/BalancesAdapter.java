@@ -9,22 +9,21 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.billsplit.R;
-import com.example.billsplit.local.AppDataStore;
+import com.example.billsplit.data.model.MemberBalance;
+import com.example.billsplit.local.TokenManager;
 import com.example.billsplit.util.Money;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Locale;
 
 public class BalancesAdapter extends RecyclerView.Adapter<BalancesAdapter.BalanceViewHolder> {
 
-    private final List<Map.Entry<String, Double>> entries = new ArrayList<>();
-    private final AppDataStore store = AppDataStore.getInstance();
+    private final List<MemberBalance> entries = new ArrayList<>();
 
-    public void submitList(Map<String, Double> balances) {
+    public void submitList(List<MemberBalance> balances) {
         entries.clear();
-        entries.addAll(new LinkedHashMap<>(balances).entrySet());
+        entries.addAll(balances);
         notifyDataSetChanged();
     }
 
@@ -38,8 +37,7 @@ public class BalancesAdapter extends RecyclerView.Adapter<BalancesAdapter.Balanc
 
     @Override
     public void onBindViewHolder(@NonNull BalanceViewHolder holder, int position) {
-        Map.Entry<String, Double> entry = entries.get(position);
-        holder.bind(store.getUserById(entry.getKey()), entry.getValue());
+        holder.bind(entries.get(position));
     }
 
     @Override
@@ -48,19 +46,25 @@ public class BalancesAdapter extends RecyclerView.Adapter<BalancesAdapter.Balanc
     }
 
     static class BalanceViewHolder extends RecyclerView.ViewHolder {
+        private final TextView initial;
         private final TextView name;
         private final TextView amount;
 
         BalanceViewHolder(@NonNull View itemView) {
             super(itemView);
+            initial = itemView.findViewById(R.id.balanceInitial);
             name = itemView.findViewById(R.id.balanceName);
             amount = itemView.findViewById(R.id.balanceAmount);
         }
 
-        void bind(com.example.billsplit.data.model.User user, double balance) {
-            boolean isCurrentUser = user != null && AppDataStore.CURRENT_USER_ID.equals(user.getId());
-            name.setText(isCurrentUser ? "You" : (user != null ? user.getUsername() : ""));
+        void bind(MemberBalance entry) {
+            String currentUserId = TokenManager.getInstance().getCurrentUserId();
+            boolean isCurrentUser = currentUserId != null && currentUserId.equals(entry.getUserId());
+            String displayName = isCurrentUser ? "You" : entry.getUsername();
+            name.setText(displayName);
+            initial.setText(displayName.isEmpty() ? "" : displayName.substring(0, 1).toUpperCase(Locale.US));
 
+            double balance = entry.getBalance();
             int color;
             if (Math.abs(balance) < 0.01) {
                 amount.setText(R.string.settled_up);

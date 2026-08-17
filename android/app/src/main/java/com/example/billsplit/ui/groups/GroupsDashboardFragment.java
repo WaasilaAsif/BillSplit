@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -66,17 +67,11 @@ public class GroupsDashboardFragment extends BottomNavFragment {
                 Navigation.findNavController(view).navigate(R.id.action_global_notificationsFragment));
 
         viewModel.getState().observe(getViewLifecycleOwner(), this::renderState);
-        viewModel.getGroups().observe(getViewLifecycleOwner(), groups -> {
-            if (viewModel.getMemberCounts().getValue() != null) {
-                adapter.submitList(groups, viewModel.getMemberCounts().getValue());
-            }
-        });
-        viewModel.getMemberCounts().observe(getViewLifecycleOwner(), counts -> {
-            if (viewModel.getGroups().getValue() != null) {
-                adapter.submitList(viewModel.getGroups().getValue(), counts);
-            }
-        });
+        viewModel.getGroups().observe(getViewLifecycleOwner(), adapter::submitList);
         viewModel.getSummary().observe(getViewLifecycleOwner(), this::renderSummary);
+        viewModel.getErrorMessage().observe(getViewLifecycleOwner(), error -> {
+            if (error != null) Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show();
+        });
 
         setupBottomNav(view);
         viewModel.load();

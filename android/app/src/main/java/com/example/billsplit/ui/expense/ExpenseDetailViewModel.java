@@ -5,16 +5,18 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.billsplit.data.model.Expense;
+import com.example.billsplit.data.model.ExpenseSplit;
+import com.example.billsplit.data.repository.ApiCallback;
 import com.example.billsplit.data.repository.ExpenseRepository;
-import com.example.billsplit.local.AppDataStore;
+import com.example.billsplit.local.TokenManager;
 
 public class ExpenseDetailViewModel extends ViewModel {
 
     private final ExpenseRepository expenseRepository = new ExpenseRepository();
-    private final AppDataStore store = AppDataStore.getInstance();
 
     private final MutableLiveData<Expense> expense = new MutableLiveData<>();
     private final MutableLiveData<Boolean> deleted = new MutableLiveData<>();
+    private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
 
     public LiveData<Expense> getExpense() {
         return expense;
@@ -24,28 +26,50 @@ public class ExpenseDetailViewModel extends ViewModel {
         return deleted;
     }
 
+    public LiveData<String> getErrorMessage() {
+        return errorMessage;
+    }
+
     public void load(String expenseId) {
-        expense.setValue(expenseRepository.getExpense(expenseId));
+        expenseRepository.getExpense(expenseId, new ApiCallback<Expense>() {
+            @Override
+            public void onSuccess(Expense result) {
+                expense.setValue(result);
+            }
+
+            @Override
+            public void onError(String message) {
+                errorMessage.setValue(message);
+            }
+        });
     }
 
     public void delete() {
         Expense e = expense.getValue();
-        if (e != null) {
-            expenseRepository.deleteExpense(e.getId());
-            deleted.setValue(true);
-        }
+        if (e == null) return;
+        expenseRepository.deleteExpense(e.getId(), new ApiCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                deleted.setValue(true);
+            }
+
+            @Override
+            public void onError(String message) {
+                errorMessage.setValue(message);
+            }
+        });
     }
 
-    /** Who should pay whom to settle this specific expense, and how much. */
+//   Who should pay whom to settle this specific expense, and how much.
     public SettleTarget resolveSettleTarget() {
         Expense e = expense.getValue();
-        if (e == null || e.getSplits() == null) return null;
-        String userId = AppDataStore.CURRENT_USER_ID;
+        String userId = TokenManager.getInstance().getCurrentUserId();
+        if (e == null || e.getSplits() == null || userId == null) return null;
 
         if (userId.equals(e.getPaidBy())) {
             String biggestDebtorId = null;
             double biggestShare = 0;
-            for (com.example.billsplit.data.model.ExpenseSplit s : e.getSplits()) {
+            for (ExpenseSplit s : e.getSplits()) {
                 if (!userId.equals(s.getUserId()) && s.getShareAmount() > biggestShare) {
                     biggestShare = s.getShareAmount();
                     biggestDebtorId = s.getUserId();
@@ -55,7 +79,7 @@ public class ExpenseDetailViewModel extends ViewModel {
             return new SettleTarget(biggestDebtorId, userId, biggestShare);
         }
 
-        for (com.example.billsplit.data.model.ExpenseSplit s : e.getSplits()) {
+        for (ExpenseSplit s : e.getSplits()) {
             if (userId.equals(s.getUserId())) {
                 return new SettleTarget(userId, e.getPaidBy(), s.getShareAmount());
             }

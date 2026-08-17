@@ -5,14 +5,15 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.billsplit.data.model.Expense;
-import com.example.billsplit.data.model.ExpenseSplit;
 import com.example.billsplit.data.model.Group;
-import com.example.billsplit.data.model.SplitType;
-import com.example.billsplit.data.model.User;
+import com.example.billsplit.data.model.GroupDetail;
+import com.example.billsplit.data.model.GroupMember;
+import com.example.billsplit.data.repository.ApiCallback;
 import com.example.billsplit.data.repository.ExpenseRepository;
 import com.example.billsplit.data.repository.GroupRepository;
-import com.example.billsplit.local.AppDataStore;
+import com.example.billsplit.local.TokenManager;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ExpenseFormViewModel extends ViewModel {
@@ -22,10 +23,11 @@ public class ExpenseFormViewModel extends ViewModel {
 
     private String expenseId; // null in add mode
     private String selectedGroupId;
-    private String paidByUserId = AppDataStore.CURRENT_USER_ID;
+    private String paidByUserId = TokenManager.getInstance().getCurrentUserId();
     private String selectedCategory = "Food";
 
     private final MutableLiveData<Group> group = new MutableLiveData<>();
+    private final MutableLiveData<List<GroupMember>> groupMembers = new MutableLiveData<>();
     private final MutableLiveData<Expense> existingExpense = new MutableLiveData<>();
     private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
     private final MutableLiveData<Boolean> saveSuccess = new MutableLiveData<>();
@@ -33,6 +35,10 @@ public class ExpenseFormViewModel extends ViewModel {
 
     public LiveData<Group> getGroup() {
         return group;
+    }
+
+    public LiveData<List<GroupMember>> getGroupMembers() {
+        return groupMembers;
     }
 
     public LiveData<Expense> getExistingExpense() {
@@ -67,26 +73,50 @@ public class ExpenseFormViewModel extends ViewModel {
         this.expenseId = expenseId;
 
         if (expenseId != null) {
-            Expense expense = expenseRepository.getExpense(expenseId);
-            existingExpense.setValue(expense);
-            if (expense != null) {
-                selectedGroupId = expense.getGroupId();
-                paidByUserId = expense.getPaidBy();
-                selectedCategory = expense.getCategory() != null ? expense.getCategory() : "Food";
-            }
+            expenseRepository.getExpense(expenseId, new ApiCallback<Expense>() {
+                @Override
+                public void onSuccess(Expense expense) {
+                    existingExpense.setValue(expense);
+                    selectedGroupId = expense.getGroupId();
+                    paidByUserId = expense.getPaidBy();
+                    selectedCategory = expense.getCategory() != null ? expense.getCategory() : "Food";
+                    loadGroupDetail(selectedGroupId);
+                }
+
+                @Override
+                public void onError(String message) {
+                    errorMessage.setValue(message);
+                }
+            });
         } else {
             selectedGroupId = groupId;
+            if (selectedGroupId != null) loadGroupDetail(selectedGroupId);
         }
-        group.setValue(groupRepository.getGroup(selectedGroupId));
     }
 
-    public List<Group> getAllGroups() {
-        return groupRepository.getGroups();
+    private void loadGroupDetail(String groupId) {
+        groupRepository.getGroupDetail(groupId, new ApiCallback<GroupDetail>() {
+            @Override
+            public void onSuccess(GroupDetail detail) {
+                group.setValue(detail.getGroup());
+                groupMembers.setValue(detail.getMembers());
+            }
+
+            @Override
+            public void onError(String message) {
+                errorMessage.setValue(message);
+            }
+        });
+    }
+
+    public void loadAllGroups(ApiCallback<List<Group>> callback) {
+        groupRepository.getGroups(callback);
     }
 
     public void selectGroup(Group g) {
         selectedGroupId = g.getId();
         group.setValue(g);
+        loadGroupDetail(g.getId());
     }
 
     public void selectPaidBy(String userId) {
@@ -109,7 +139,7 @@ public class ExpenseFormViewModel extends ViewModel {
             amount = 0;
         }
         if (amount <= 0) {
-            errorMessage.setValue("Enter an amount greater than $0");
+            errorMessage.setValue("Enter an amount greater than Rs0");
             return;
         }
         if (description == null || description.trim().isEmpty()) {
@@ -117,32 +147,45 @@ public class ExpenseFormViewModel extends ViewModel {
             return;
         }
 
-        List<User> members = groupRepository.getGroupMemberUsers(selectedGroupId);
-        List<String> memberIds = new java.util.ArrayList<>();
-        for (User u : members) memberIds.add(u.getId());
-        List<ExpenseSplit> splits = ExpenseRepository.buildEqualSplits(amount, memberIds);
+        List<GroupMember> members = groupMembers.getValue();
+        List<String> participantIds = new ArrayList<>();
+        if (members != null) {
+            for (GroupMember m : members) participantIds.add(m.getUserId());
+        }
+
+        ApiCallback<String> resultCallback = new ApiCallback<String>() {
+            @Override
+            public void onSuccess(String newExpenseId) {
+                saveSuccess.setValue(true);
+            }
+
+            @Override
+            public void onError(String message) {
+                errorMessage.setValue(message);
+            }
+        };
 
         if (isEditMode()) {
-            Expense updated = existingExpense.getValue();
-            if (updated == null) return;
-            updated.setAmount(amount);
-            updated.setDescription(description.trim());
-            updated.setCategory(selectedCategory);
-            updated.setPaidBy(paidByUserId);
-            updated.setSplitType(SplitType.EQUAL);
-            updated.setSplits(splits);
-            expenseRepository.updateExpense(updated);
+            expenseRepository.updateExpense(expenseId, selectedGroupId, paidByUserId, amount,
+                    description.trim(), selectedCategory, participantIds, resultCallback);
         } else {
             expenseRepository.addExpense(selectedGroupId, paidByUserId, amount, description.trim(),
-                    selectedCategory, SplitType.EQUAL, splits);
+                    selectedCategory, participantIds, resultCallback);
         }
-        saveSuccess.setValue(true);
     }
 
     public void delete() {
-        if (expenseId != null) {
-            expenseRepository.deleteExpense(expenseId);
-            deleteSuccess.setValue(true);
-        }
+        if (expenseId == null) return;
+        expenseRepository.deleteExpense(expenseId, new ApiCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                deleteSuccess.setValue(true);
+            }
+
+            @Override
+            public void onError(String message) {
+                errorMessage.setValue(message);
+            }
+        });
     }
 }

@@ -12,7 +12,7 @@ import com.example.billsplit.util.Money;
 import java.time.Duration;
 import java.time.Instant;
 
-/** Turns an ActivityEvent into the display text/time both Activity Feed and Notifications need. */
+
 public final class ActivityTextFormatter {
 
     private ActivityTextFormatter() {
@@ -64,6 +64,11 @@ public final class ActivityTextFormatter {
         long days = elapsed.toDays();
         if (days == 1) return context.getString(R.string.time_yesterday);
         return context.getString(R.string.time_days_ago, days);
+    }
+
+    /** Exposed for the row's avatar initial — same actor-name resolution `describe()` already uses. */
+    public static String actorName(ActivityEvent event) {
+        return nameFor(AppDataStore.getInstance(), event.getActorUserId());
     }
 
     public static String sectionFor(Context context, String createdAt) {

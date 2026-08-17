@@ -13,8 +13,11 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.widget.Toast;
+
 import com.example.billsplit.R;
 import com.example.billsplit.data.model.Friend;
+import com.example.billsplit.data.repository.ApiCallback;
 import com.example.billsplit.data.repository.FriendRepository;
 import com.example.billsplit.ui.common.BottomNavFragment;
 
@@ -79,8 +82,18 @@ public class FriendsFragment extends BottomNavFragment {
     }
 
     private void loadFriends() {
-        allFriends = friendRepository.getFriends();
-        filter("");
+        friendRepository.getFriends(new ApiCallback<List<Friend>>() {
+            @Override
+            public void onSuccess(List<Friend> friends) {
+                allFriends = friends;
+                filter("");
+            }
+
+            @Override
+            public void onError(String message) {
+                if (isAdded()) Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void filter(String query) {

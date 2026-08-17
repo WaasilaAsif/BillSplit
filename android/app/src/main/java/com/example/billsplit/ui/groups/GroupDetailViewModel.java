@@ -4,19 +4,22 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.example.billsplit.R;
 import com.example.billsplit.data.model.Expense;
 import com.example.billsplit.data.model.Group;
+import com.example.billsplit.data.model.GroupDetail;
 import com.example.billsplit.data.model.GroupMember;
-import com.example.billsplit.data.model.Settlement;
-import com.example.billsplit.data.repository.ExpenseRepository;
+import com.example.billsplit.data.model.MemberBalance;
+import com.example.billsplit.data.repository.ApiCallback;
 import com.example.billsplit.data.repository.GroupRepository;
-import com.example.billsplit.local.AppDataStore;
-import com.example.billsplit.util.BalanceCalculator;
+import com.example.billsplit.local.TokenManager;
+import com.example.billsplit.util.Money;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -27,19 +30,19 @@ public class GroupDetailViewModel extends ViewModel {
             DateTimeFormatter.ofPattern("MMMM yyyy", Locale.US);
 
     private final GroupRepository groupRepository = new GroupRepository();
-    private final ExpenseRepository expenseRepository = new ExpenseRepository();
-    private final AppDataStore store = AppDataStore.getInstance();
 
     private String groupId;
 
     private final MutableLiveData<Group> group = new MutableLiveData<>();
     private final MutableLiveData<List<Object>> expenseItems = new MutableLiveData<>();
-    private final MutableLiveData<Map<String, Double>> memberBalances = new MutableLiveData<>();
+    private final MutableLiveData<Map<String, String>> memberNames = new MutableLiveData<>();
+    private final MutableLiveData<List<MemberBalance>> memberBalances = new MutableLiveData<>();
     private final MutableLiveData<String> balanceBannerText = new MutableLiveData<>();
     private final MutableLiveData<Integer> balanceBannerColor = new MutableLiveData<>();
     private final MutableLiveData<Double> groupSpend = new MutableLiveData<>();
     private final MutableLiveData<Double> yourPaidTotal = new MutableLiveData<>();
     private final MutableLiveData<Double> yourShareTotal = new MutableLiveData<>();
+    private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
 
     public LiveData<Group> getGroup() {
         return group;
@@ -49,7 +52,11 @@ public class GroupDetailViewModel extends ViewModel {
         return expenseItems;
     }
 
-    public LiveData<Map<String, Double>> getMemberBalances() {
+    public LiveData<Map<String, String>> getMemberNames() {
+        return memberNames;
+    }
+
+    public LiveData<List<MemberBalance>> getMemberBalances() {
         return memberBalances;
     }
 
@@ -73,6 +80,10 @@ public class GroupDetailViewModel extends ViewModel {
         return yourShareTotal;
     }
 
+    public LiveData<String> getErrorMessage() {
+        return errorMessage;
+    }
+
     public String getGroupId() {
         return groupId;
     }
@@ -80,68 +91,103 @@ public class GroupDetailViewModel extends ViewModel {
     public void load(String groupId) {
         this.groupId = groupId;
 
-        Group g = groupRepository.getGroup(groupId);
-        List<Expense> expenses = expenseRepository.getExpensesForGroup(groupId);
-        List<Settlement> settlements = store.getSettlementsForGroup(groupId);
-        String userId = AppDataStore.CURRENT_USER_ID;
+        groupRepository.getGroupDetail(groupId, new ApiCallback<GroupDetail>() {
+            @Override
+            public void onSuccess(GroupDetail detail) {
+                onGroupDetailLoaded(detail);
+            }
 
-        double balance = BalanceCalculator.applySettlements(
-                BalanceCalculator.userBalance(expenses, userId), settlements, userId);
-        if (g != null) g.setCurrentUserBalance(balance);
+            @Override
+            public void onError(String message) {
+                errorMessage.setValue(message);
+            }
+        });
+
+        groupRepository.getGroupBalances(groupId, new ApiCallback<List<MemberBalance>>() {
+            @Override
+            public void onSuccess(List<MemberBalance> otherMembers) {
+                onBalancesLoaded(otherMembers);
+            }
+
+            @Override
+            public void onError(String message) {
+                errorMessage.setValue(message);
+            }
+        });
+    }
+
+    private void onGroupDetailLoaded(GroupDetail detail) {
+        Group g = detail.getGroup();
         group.setValue(g);
 
+        Map<String, String> names = new HashMap<>();
+        for (GroupMember m : detail.getMembers()) {
+            names.put(m.getUserId(), m.getUsername());
+        }
+        memberNames.setValue(names);
+
+        List<Expense> expenses = detail.getExpenses();
         expenseItems.setValue(groupByMonth(expenses));
-        memberBalances.setValue(groupRepository.getMemberBalances(groupId));
-        renderBanner(groupId, expenses, settlements, userId, balance);
 
-        double spend = groupRepository.getGroupSpendTotal(groupId);
-        groupSpend.setValue(spend);
+        renderBanner(g);
 
+        String userId = TokenManager.getInstance().getCurrentUserId();
+        double spend = 0;
         double paid = 0;
         double share = 0;
         for (Expense e : expenses) {
-            if (userId.equals(e.getPaidBy())) paid += e.getAmount();
-            if (e.getSplits() != null) {
-                for (com.example.billsplit.data.model.ExpenseSplit s : e.getSplits()) {
-                    if (userId.equals(s.getUserId())) share += s.getShareAmount();
-                }
-            }
+            spend += e.getAmount();
+            if (userId != null && userId.equals(e.getPaidBy())) paid += e.getAmount();
+            if (e.getYourShare() != null) share += e.getYourShare();
         }
+        groupSpend.setValue(spend);
         yourPaidTotal.setValue(paid);
         yourShareTotal.setValue(share);
     }
 
-    private void renderBanner(String groupId, List<Expense> expenses, List<Settlement> settlements,
-                               String userId, double balance) {
+    private void onBalancesLoaded(List<MemberBalance> otherMembers) {
+        List<MemberBalance> withSelf = new ArrayList<>();
+        String userId = TokenManager.getInstance().getCurrentUserId();
+        Group g = group.getValue();
+        if (userId != null && g != null) {
+            withSelf.add(new MemberBalance(userId, "You", g.getCurrentUserBalance()));
+        }
+        withSelf.addAll(otherMembers);
+        memberBalances.setValue(withSelf);
+
+        renderBannerCounterpart(otherMembers);
+    }
+
+    /** Sets the banner's amount/color from the group's own balance; the counterpart name fills in once balances arrive. */
+    private void renderBanner(Group g) {
+        double balance = g.getCurrentUserBalance();
         if (Math.abs(balance) < 0.01) {
             balanceBannerText.setValue(null); // hidden when settled
             return;
         }
+        balanceBannerColor.setValue(balance < 0 ? R.color.color_error : R.color.primary);
+        balanceBannerText.setValue(balance < 0
+                ? "You owe " + Money.format(balance)
+                : "You're owed " + Money.format(balance));
+    }
 
-        String counterpartName = null;
-        double biggest = 0;
-        for (GroupMember m : store.getGroupMembers(groupId)) {
-            if (userId.equals(m.getUserId())) continue;
-            double pair = BalanceCalculator.pairBalance(expenses, settlements, userId, m.getUserId());
-            if (Math.abs(pair) > Math.abs(biggest)) {
-                biggest = pair;
-                counterpartName = m.getUsername();
+    private void renderBannerCounterpart(List<MemberBalance> otherMembers) {
+        Group g = group.getValue();
+        if (g == null || Math.abs(g.getCurrentUserBalance()) < 0.01) return;
+
+        MemberBalance biggest = null;
+        for (MemberBalance m : otherMembers) {
+            if (biggest == null || Math.abs(m.getBalance()) > Math.abs(biggest.getBalance())) {
+                biggest = m;
             }
         }
+        if (biggest == null) return;
 
-        boolean bannerColorIsError = balance < 0;
-        balanceBannerColor.setValue(bannerColorIsError
-                ? com.example.billsplit.R.color.color_error
-                : com.example.billsplit.R.color.primary);
-
-        String amount = com.example.billsplit.util.Money.format(balance);
-        if (counterpartName != null) {
-            balanceBannerText.setValue(balance < 0
-                    ? "You owe " + amount + " to " + counterpartName
-                    : counterpartName + " owes you " + amount);
-        } else {
-            balanceBannerText.setValue(balance < 0 ? "You owe " + amount : "You're owed " + amount);
-        }
+        double balance = g.getCurrentUserBalance();
+        String amount = Money.format(balance);
+        balanceBannerText.setValue(balance < 0
+                ? "You owe " + amount + " to " + biggest.getUsername()
+                : biggest.getUsername() + " owes you " + amount);
     }
 
     private List<Object> groupByMonth(List<Expense> expenses) {

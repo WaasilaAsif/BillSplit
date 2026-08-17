@@ -14,6 +14,7 @@ import com.example.billsplit.util.Money;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class GroupsAdapter extends RecyclerView.Adapter<GroupsAdapter.GroupViewHolder> {
 
@@ -22,18 +23,15 @@ public class GroupsAdapter extends RecyclerView.Adapter<GroupsAdapter.GroupViewH
     }
 
     private final List<Group> groups = new ArrayList<>();
-    private final java.util.Map<String, Integer> memberCounts = new java.util.HashMap<>();
     private final OnGroupClickListener listener;
 
     public GroupsAdapter(OnGroupClickListener listener) {
         this.listener = listener;
     }
 
-    public void submitList(List<Group> newGroups, java.util.Map<String, Integer> memberCounts) {
+    public void submitList(List<Group> newGroups) {
         groups.clear();
         groups.addAll(newGroups);
-        this.memberCounts.clear();
-        this.memberCounts.putAll(memberCounts);
         notifyDataSetChanged();
     }
 
@@ -48,7 +46,7 @@ public class GroupsAdapter extends RecyclerView.Adapter<GroupsAdapter.GroupViewH
     @Override
     public void onBindViewHolder(@NonNull GroupViewHolder holder, int position) {
         Group group = groups.get(position);
-        holder.bind(group, memberCounts.getOrDefault(group.getId(), 0), listener);
+        holder.bind(group, group.getMemberCount(), listener);
     }
 
     @Override
@@ -57,6 +55,7 @@ public class GroupsAdapter extends RecyclerView.Adapter<GroupsAdapter.GroupViewH
     }
 
     static class GroupViewHolder extends RecyclerView.ViewHolder {
+        private final TextView initial;
         private final TextView name;
         private final TextView memberCount;
         private final TextView balanceLabel;
@@ -64,6 +63,7 @@ public class GroupsAdapter extends RecyclerView.Adapter<GroupsAdapter.GroupViewH
 
         GroupViewHolder(@NonNull View itemView) {
             super(itemView);
+            initial = itemView.findViewById(R.id.groupInitial);
             name = itemView.findViewById(R.id.groupName);
             memberCount = itemView.findViewById(R.id.groupMemberCount);
             balanceLabel = itemView.findViewById(R.id.groupBalanceLabel);
@@ -72,6 +72,8 @@ public class GroupsAdapter extends RecyclerView.Adapter<GroupsAdapter.GroupViewH
 
         void bind(Group group, int members, OnGroupClickListener listener) {
             name.setText(group.getName());
+            initial.setText(group.getName().isEmpty() ? ""
+                    : group.getName().substring(0, 1).toUpperCase(Locale.US));
             memberCount.setText(itemView.getResources()
                     .getString(R.string.members_count, members));
 

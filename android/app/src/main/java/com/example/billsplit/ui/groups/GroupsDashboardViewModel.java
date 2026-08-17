@@ -5,11 +5,10 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.billsplit.data.model.Group;
+import com.example.billsplit.data.repository.ApiCallback;
 import com.example.billsplit.data.repository.GroupRepository;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class GroupsDashboardViewModel extends ViewModel {
 
@@ -19,8 +18,8 @@ public class GroupsDashboardViewModel extends ViewModel {
 
     private final MutableLiveData<UiState> state = new MutableLiveData<>();
     private final MutableLiveData<List<Group>> groups = new MutableLiveData<>();
-    private final MutableLiveData<Map<String, Integer>> memberCounts = new MutableLiveData<>();
     private final MutableLiveData<GroupRepository.DashboardSummary> summary = new MutableLiveData<>();
+    private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
 
     public LiveData<UiState> getState() {
         return state;
@@ -30,24 +29,40 @@ public class GroupsDashboardViewModel extends ViewModel {
         return groups;
     }
 
-    public LiveData<Map<String, Integer>> getMemberCounts() {
-        return memberCounts;
-    }
-
     public LiveData<GroupRepository.DashboardSummary> getSummary() {
         return summary;
     }
 
-    public void load() {
-        List<Group> loaded = groupRepository.getGroups();
-        Map<String, Integer> counts = new HashMap<>();
-        for (Group g : loaded) {
-            counts.put(g.getId(), groupRepository.getGroupMembers(g.getId()).size());
-        }
+    public LiveData<String> getErrorMessage() {
+        return errorMessage;
+    }
 
-        groups.setValue(loaded);
-        memberCounts.setValue(counts);
-        summary.setValue(groupRepository.getDashboardSummary());
-        state.setValue(loaded.isEmpty() ? UiState.EMPTY : UiState.SUCCESS);
+    public void load() {
+        state.setValue(UiState.LOADING);
+        groupRepository.getGroups(new ApiCallback<List<Group>>() {
+            @Override
+            public void onSuccess(List<Group> result) {
+                groups.setValue(result);
+                summary.setValue(computeSummary(result));
+                state.setValue(result.isEmpty() ? UiState.EMPTY : UiState.SUCCESS);
+            }
+
+            @Override
+            public void onError(String message) {
+                errorMessage.setValue(message);
+                state.setValue(UiState.ERROR);
+            }
+        });
+    }
+
+    private GroupRepository.DashboardSummary computeSummary(List<Group> groups) {
+        double youOwe = 0;
+        double youAreOwed = 0;
+        for (Group g : groups) {
+            double balance = g.getCurrentUserBalance();
+            if (balance < 0) youOwe += -balance;
+            else youAreOwed += balance;
+        }
+        return new GroupRepository.DashboardSummary(youOwe, youAreOwed);
     }
 }

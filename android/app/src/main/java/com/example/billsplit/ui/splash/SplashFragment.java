@@ -19,7 +19,7 @@ public class SplashFragment extends Fragment {
     private static final long DISPLAY_DURATION_MS = 1200;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
-    private final Runnable advance = this::navigateToOnboarding;
+    private final Runnable advance = this::navigateToLogin;
 
     @Nullable
     @Override
@@ -34,10 +34,10 @@ public class SplashFragment extends Fragment {
         handler.postDelayed(advance, DISPLAY_DURATION_MS);
     }
 
-    private void navigateToOnboarding() {
+    private void navigateToLogin() {
         if (!isAdded()) return;
         Navigation.findNavController(requireView())
-                .navigate(R.id.action_splashFragment_to_onboardingFragment);
+                .navigate(R.id.action_splashFragment_to_loginFragment);
     }
 
     @Override

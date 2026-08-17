@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -38,6 +39,9 @@ public class ActivityFeedFragment extends BottomNavFragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         adapter = new ActivityListAdapter(false);
         recyclerView.setAdapter(adapter);
+
+        view.findViewById(R.id.notificationsIcon).setOnClickListener(v ->
+                Navigation.findNavController(view).navigate(R.id.action_global_notificationsFragment));
 
         setupBottomNav(view);
         loadFeed();

@@ -14,20 +14,28 @@ import androidx.navigation.NavOptions;
 import androidx.navigation.Navigation;
 
 import com.example.billsplit.R;
+import com.example.billsplit.data.model.Friend;
+import com.example.billsplit.data.model.Group;
 import com.example.billsplit.data.model.Settlement;
 import com.example.billsplit.data.model.User;
+import com.example.billsplit.data.repository.ApiCallback;
+import com.example.billsplit.data.repository.AuthRepository;
 import com.example.billsplit.data.repository.FriendRepository;
 import com.example.billsplit.data.repository.GroupRepository;
-import com.example.billsplit.local.AppDataStore;
+import com.example.billsplit.data.repository.SettlementRepository;
+import com.example.billsplit.local.TokenManager;
 import com.example.billsplit.ui.common.BottomNavFragment;
 import com.example.billsplit.util.Money;
 
+import java.util.List;
 import java.util.Locale;
 
 public class AccountFragment extends BottomNavFragment {
 
     private final GroupRepository groupRepository = new GroupRepository();
     private final FriendRepository friendRepository = new FriendRepository();
+    private final SettlementRepository settlementRepository = new SettlementRepository();
+    private final AuthRepository authRepository = new AuthRepository();
 
     @Nullable
     @Override
@@ -40,14 +48,8 @@ public class AccountFragment extends BottomNavFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        User currentUser = AppDataStore.getInstance().getCurrentUser();
-        if (currentUser != null) {
-            String initial = currentUser.getUsername().isEmpty() ? ""
-                    : currentUser.getUsername().substring(0, 1).toUpperCase(Locale.US);
-            ((TextView) view.findViewById(R.id.profileInitial)).setText(initial);
-            ((TextView) view.findViewById(R.id.profileNameText)).setText(currentUser.getUsername());
-            ((TextView) view.findViewById(R.id.profileEmailText)).setText(currentUser.getEmail());
-        }
+        setupBottomNav(view);
+        renderProfileHeader(view);
 
         view.findViewById(R.id.settingsIcon).setOnClickListener(v ->
                 Navigation.findNavController(view).navigate(R.id.action_global_settingsFragment));
@@ -55,6 +57,8 @@ public class AccountFragment extends BottomNavFragment {
         view.findViewById(R.id.paymentMethodsRow).setOnClickListener(v ->
                 Navigation.findNavController(view).navigate(R.id.action_global_settingsFragment));
         view.findViewById(R.id.inviteFriendsRow).setOnClickListener(v -> shareInvite());
+        view.findViewById(R.id.helpFeedbackRow).setOnClickListener(v ->
+                Toast.makeText(requireContext(), R.string.coming_soon, Toast.LENGTH_SHORT).show());
 
         view.findViewById(R.id.logOutRow).setOnClickListener(v -> logOut(view));
 
@@ -64,23 +68,65 @@ public class AccountFragment extends BottomNavFragment {
     @Override
     public void onResume() {
         super.onResume();
-        renderStats(requireView());
+        if (getView() != null) renderStats(getView());
+    }
+
+    private void renderProfileHeader(View view) {
+        authRepository.getCurrentUser(new ApiCallback<User>() {
+            @Override
+            public void onSuccess(User user) {
+                if (!isAdded()) return;
+                String initial = user.getUsername().isEmpty() ? ""
+                        : user.getUsername().substring(0, 1).toUpperCase(Locale.US);
+                ((TextView) view.findViewById(R.id.profileInitial)).setText(initial);
+                ((TextView) view.findViewById(R.id.profileNameText)).setText(user.getUsername());
+                ((TextView) view.findViewById(R.id.profileEmailText)).setText(user.getEmail());
+            }
+
+            @Override
+            public void onError(String message) {
+                // Non-critical for this header — fail quietly, stats below still load independently.
+            }
+        });
     }
 
     private void renderStats(View view) {
-        ((TextView) view.findViewById(R.id.statGroupsText))
-                .setText(String.valueOf(groupRepository.getGroups().size()));
-        ((TextView) view.findViewById(R.id.statFriendsText))
-                .setText(String.valueOf(friendRepository.getFriends().size()));
-
-        double settledTotal = 0;
-        String userId = AppDataStore.CURRENT_USER_ID;
-        for (Settlement s : AppDataStore.getInstance().getAllSettlements()) {
-            if (userId.equals(s.getFromUserId()) || userId.equals(s.getToUserId())) {
-                settledTotal += s.getAmount();
+        groupRepository.getGroups(new ApiCallback<List<Group>>() {
+            @Override
+            public void onSuccess(List<Group> groups) {
+                if (isAdded()) ((TextView) view.findViewById(R.id.statGroupsText)).setText(String.valueOf(groups.size()));
             }
-        }
-        ((TextView) view.findViewById(R.id.statSettledText)).setText(Money.format(settledTotal));
+
+            @Override
+            public void onError(String message) {
+                // Stats are non-critical — fail quietly rather than toast-spamming this screen.
+            }
+        });
+
+        friendRepository.getFriends(new ApiCallback<List<Friend>>() {
+            @Override
+            public void onSuccess(List<Friend> friends) {
+                if (isAdded()) ((TextView) view.findViewById(R.id.statFriendsText)).setText(String.valueOf(friends.size()));
+            }
+
+            @Override
+            public void onError(String message) {
+            }
+        });
+
+        settlementRepository.getSettlements(new ApiCallback<List<Settlement>>() {
+            @Override
+            public void onSuccess(List<Settlement> settlements) {
+                if (!isAdded()) return;
+                double total = 0;
+                for (Settlement s : settlements) total += s.getAmount();
+                ((TextView) view.findViewById(R.id.statSettledText)).setText(Money.format(total));
+            }
+
+            @Override
+            public void onError(String message) {
+            }
+        });
     }
 
     private void shareInvite() {
@@ -92,6 +138,7 @@ public class AccountFragment extends BottomNavFragment {
     }
 
     private void logOut(View view) {
+        TokenManager.getInstance().clearToken();
         Toast.makeText(requireContext(), R.string.log_out, Toast.LENGTH_SHORT).show();
         NavOptions options = new NavOptions.Builder()
                 .setPopUpTo(R.id.splashFragment, true)
