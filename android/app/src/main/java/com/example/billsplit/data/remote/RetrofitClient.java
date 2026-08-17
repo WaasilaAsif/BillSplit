@@ -22,14 +22,7 @@ public class RetrofitClient {
     private RetrofitClient() {
     }
 
-    /**
-     * Attaches "Authorization: Bearer <token>" to EVERY outgoing request
-     * automatically, whenever a token exists — so individual Repository
-     * methods never need to remember to add it themselves. On /auth/login
-     * and /auth/register specifically, TokenManager.getToken() is null
-     * anyway (nothing to log in with yet), so this is a harmless no-op
-     * for those two calls.
-     */
+    //To atach the auth bearer to all the incoming and outgoing requests 
     private static class AuthInterceptor implements Interceptor {
         @Override
         public Response intercept(Chain chain) throws IOException {
@@ -50,13 +43,14 @@ public class RetrofitClient {
     private static synchronized Retrofit getRetrofit() {
         if (retrofit == null) {
             HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-            logging.setLevel(HttpLoggingInterceptor.Level.BODY); // full request/response bodies in Logcat — turn down to NONE before a release build
+            logging.setLevel(HttpLoggingInterceptor.Level.BODY); // full request/response bodies in Logcat for debugging
 
             OkHttpClient client = new OkHttpClient.Builder()
                     .addInterceptor(new AuthInterceptor())
                     .addInterceptor(logging)
-                    .connectTimeout(15, TimeUnit.SECONDS)
-                    .readTimeout(15, TimeUnit.SECONDS) // generous on purpose — Render free tier cold starts can take 30-60s on the FIRST request after idle
+                    .connectTimeout(75, TimeUnit.SECONDS)
+                    .readTimeout(75, TimeUnit.SECONDS) // must exceed Render free tier's documented 30-60s cold-start window, or every first request after idle times out client-side before the server even finishes waking up
+                    .writeTimeout(75, TimeUnit.SECONDS)
                     .build();
 
             retrofit = new Retrofit.Builder()
